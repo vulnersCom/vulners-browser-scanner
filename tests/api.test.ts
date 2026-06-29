@@ -1,4 +1,4 @@
-import { VulnersClient } from './api';
+import { VulnersClient } from '../src/api';
 
 function jsonResponse(body: unknown): Response {
   return { ok: true, status: 200, statusText: 'OK', json: async () => body } as Response;
@@ -48,6 +48,23 @@ describe('VulnersClient', () => {
     await client.scanSoftware(params);
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends the API key in the X-Api-Key header, not the request body', async () => {
+    const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ data: { search: [] } }));
+    global.fetch = fetchMock;
+
+    await new VulnersClient().scanSoftware({
+      software: 'nginx',
+      version: '1.0.0',
+      type: 'software',
+      apiKey: 'secret-key',
+    });
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((init.headers as Record<string, string>)['X-Api-Key']).toBe('secret-key');
+    expect(init.body).not.toContain('secret-key');
+    expect(init.body).not.toContain('apiKey');
   });
 
   it('retries with backoff then succeeds', async () => {

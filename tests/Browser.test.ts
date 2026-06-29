@@ -1,4 +1,4 @@
-import { sendMessage, v_browser } from './Browser';
+import { sendMessage, v_browser } from '../src/Browser';
 
 describe('sendMessage', () => {
   it('tags the message with the active tab id and forwards it', async () => {

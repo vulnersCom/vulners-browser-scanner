@@ -1,4 +1,4 @@
-import { safeColor, clampLength, urlSegment } from './sanitize';
+import { safeColor, clampLength, urlSegment } from '../src/sanitize';
 
 describe('safeColor', () => {
   it('passes valid hex colors through', () => {
