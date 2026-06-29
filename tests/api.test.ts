@@ -9,16 +9,28 @@ describe('VulnersClient', () => {
     jest.useRealTimers();
   });
 
-  it('compiles fingerprint rule regexes', async () => {
-    global.fetch = jest.fn().mockResolvedValue(
+  it('compiles fingerprint rule regexes and sends the API key header', async () => {
+    const fetchMock = jest.fn().mockResolvedValue(
       jsonResponse({
         data: { rules: { nginx: { alias: 'nginx', type: 'software', regex: 'nginx/([0-9.]+)' } } },
       })
     );
-    const rules = await new VulnersClient().getRules();
+    global.fetch = fetchMock;
+    const rules = await new VulnersClient().getRules('rules-key');
     expect(rules).toHaveLength(1);
     expect(rules[0].name).toBe('nginx');
     expect(rules[0].jsRegex).toBeInstanceOf(RegExp);
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((init.headers as Record<string, string>)['X-Api-Key']).toBe('rules-key');
+  });
+
+  it('sends the API key in the X-Api-Key header when validating', async () => {
+    const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ data: { valid: true } }));
+    global.fetch = fetchMock;
+    await new VulnersClient().validateKey('validate-key');
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((init.headers as Record<string, string>)['X-Api-Key']).toBe('validate-key');
   });
 
   it('caches software lookups within the TTL', async () => {

@@ -69,8 +69,10 @@ export class VulnersClient {
   }
 
   /** Fetch and precompile the fingerprint detection rules. */
-  async getRules(): Promise<Rule[]> {
-    const body = await this.fetchJson<VulnersRulesResponse>(RULES_URL);
+  async getRules(apiKey: string): Promise<Rule[]> {
+    const body = await this.fetchJson<VulnersRulesResponse>(RULES_URL, {
+      headers: { 'X-Api-Key': apiKey },
+    });
     const rules: Rule[] = [];
     for (const [name, rule] of Object.entries(body.data.rules)) {
       try {
@@ -90,15 +92,17 @@ export class VulnersClient {
       return cached.value;
     }
 
+    // The API key travels in the X-Api-Key header, not the request body.
+    const { apiKey, ...payload } = params;
     const value = await this.fetchJson<VulnersSoftwareResponse>(SCAN_URL, {
       method: 'POST',
       mode: 'cors',
       redirect: 'follow',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Vulners-Web-Extension/3.0',
+        'X-Api-Key': apiKey,
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify(payload),
     });
 
     // Only cache successful lookups; let errors retry next time.
@@ -108,11 +112,15 @@ export class VulnersClient {
     return value;
   }
 
-  /** Validate a user-supplied API key. */
+  /** Validate a user-supplied API key. The key is sent in the X-Api-Key header
+   *  (Vulners is behind Cloudflare, which blocks API requests that lack it). */
   async validateKey(apiKey: string): Promise<VulnersKeyValidationResponse> {
     return this.fetchJson<VulnersKeyValidationResponse>(VALIDATE_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': apiKey,
+      },
       body: JSON.stringify({ keyID: apiKey }),
     });
   }

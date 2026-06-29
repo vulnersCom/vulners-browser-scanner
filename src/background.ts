@@ -318,11 +318,16 @@ chrome.runtime.onMessage.addListener(
       case 'open_link':
         void chrome.tabs.create({ active: true, url: request.url });
         return true;
-      case 'change_settings':
+      case 'change_settings': {
+        const keyChanged =
+          request.settings.apiKey !== undefined && request.settings.apiKey !== settings.apiKey;
         Object.assign(settings, request.settings);
         void storage.set({ [LS_KEY_SETTINGS]: JSON.stringify(settings) });
         sendResponse({ settings });
+        // Rules now require the API key (Cloudflare); reload them on key change.
+        if (keyChanged) void loadRules();
         return true;
+      }
       case 'landing_seen':
         landingSeen = true;
         sendResponse(landingSeen);
@@ -371,6 +376,7 @@ chrome.runtime.onMessageExternal.addListener(
       }
       settings.apiKey = request.apiKey;
       void storage.set({ [LS_KEY_SETTINGS]: JSON.stringify(settings) });
+      void loadRules();
       sendResponse({ success: true });
     }
     return true;
@@ -402,11 +408,15 @@ chrome.tabs.onActivated.addListener((info) => {
 
 chrome.action.setBadgeBackgroundColor({ color: '#d35400' });
 
-void (async () => {
-  await loadState();
+async function loadRules(): Promise<void> {
   try {
-    rules = await vulners.getRules();
+    rules = await vulners.getRules(settings.apiKey);
   } catch (e) {
     console.error('[VULNERS] failed to load rules', e);
   }
+}
+
+void (async () => {
+  await loadState();
+  await loadRules();
 })();
