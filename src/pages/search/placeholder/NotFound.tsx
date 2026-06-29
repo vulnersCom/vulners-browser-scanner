@@ -1,24 +1,14 @@
 import type { FC } from 'react';
-import { Box, Typography } from '@mui/material';
-import { makeStyles } from 'tss-react/mui';
+import { Search } from '@mui/icons-material';
+import StatusState from '../../../components/StatusState';
 
-const useStyles = makeStyles()((theme) => ({
-  text: {
-    color: theme.palette.text.primary,
-  },
-}));
-
-const NotFound: FC = () => {
-  const { classes } = useStyles();
-
-  return (
-    <Box
-      style={{ height: '100%' }}
-      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-    >
-      <Typography className={classes.text}>Nothing found</Typography>
-    </Box>
-  );
-};
+const NotFound: FC = () => (
+  <StatusState
+    icon={<Search />}
+    tone="neutral"
+    title="No matches"
+    message="Nothing matched your search. Try another software name, host or CVE id."
+  />
+);
 
 export default NotFound;

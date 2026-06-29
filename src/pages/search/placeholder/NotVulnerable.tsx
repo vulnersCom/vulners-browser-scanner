@@ -1,28 +1,10 @@
-import HiddenSoft from './HiddenSoft';
-import { CloudDoneOutlined, OpenInBrowser } from '@mui/icons-material';
-import { Box, Typography } from '@mui/material';
-import { makeStyles } from 'tss-react/mui';
-import type { HostData } from '../../../types';
+import { useState } from 'react';
 import type { FC } from 'react';
-
-const useStyles = makeStyles()((theme) => ({
-  box: {
-    height: '100%',
-    color: theme.palette.text.primary,
-  },
-  icon: {
-    fontSize: 40,
-    fontWeight: 200,
-  },
-  domain: {
-    fontWeight: 300,
-    wordBreak: 'break-word',
-    textAlign: 'center',
-  },
-  message: {
-    textAlign: 'center',
-  },
-}));
+import Software from '../Software';
+import StatusState from '../../../components/StatusState';
+import { ExpandMore, OpenInBrowser, VerifiedUserOutlined } from '@mui/icons-material';
+import { Box, Button, List } from '@mui/material';
+import type { HostData } from '../../../types';
 
 interface Props {
   url?: string;
@@ -31,7 +13,7 @@ interface Props {
 }
 
 const NotVulnerable: FC<Props> = ({ url, hiddenSoft }) => {
-  const { classes } = useStyles();
+  const [revealed, setRevealed] = useState(false);
 
   const hiddenEntries = hiddenSoft ? Object.values(hiddenSoft.software) : [];
   // The worker only returns a host for scannable http(s) pages (localhost, IPs,
@@ -39,38 +21,62 @@ const NotVulnerable: FC<Props> = ({ url, hiddenSoft }) => {
   const isDomain = Boolean(url);
 
   const domain = url ? url.replace('www.', '') : url;
+
+  if (!isDomain) {
+    return (
+      <StatusState
+        icon={<OpenInBrowser />}
+        title="Go to some website to start scanning"
+        tone="neutral"
+      />
+    );
+  }
+
+  const count = hiddenEntries.length;
+
   return (
-    <Box
-      className={classes.box}
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        gap: 2,
-        px: 4,
-      }}
+    <StatusState
+      icon={<VerifiedUserOutlined />}
+      tone="clean"
+      eyebrow={domain}
+      title="No known vulnerabilities"
+      message={
+        count
+          ? `This host looks clean — ${count} fingerprint${count > 1 ? 's' : ''} detected, none vulnerable.`
+          : 'This host looks clean — no vulnerable software detected.'
+      }
+      action={
+        !revealed && count ? (
+          <Button
+            variant="outlined"
+            color="primary"
+            endIcon={<ExpandMore />}
+            onClick={() => setRevealed(true)}
+            sx={{
+              textTransform: 'none',
+              fontSize: 12.5,
+              fontWeight: 500,
+              borderRadius: '9px',
+              px: 1.75,
+              py: 1,
+              borderColor: (t) => t.tokens.line,
+            }}
+          >
+            Show {count} fingerprint{count > 1 ? 's' : ''}
+          </Button>
+        ) : undefined
+      }
     >
-      {isDomain ? (
-        <>
-          <CloudDoneOutlined className={classes.icon} />
-          <Typography color="primary" variant="h5" className={classes.domain}>
-            {domain}
-          </Typography>
-          <Box>
-            <Typography className={classes.message}>
-              Seems current host is not Vulnerable
-            </Typography>
-            <HiddenSoft soft={hiddenEntries} align="center" />
-          </Box>
-        </>
-      ) : (
-        <>
-          <OpenInBrowser className={classes.icon} />
-          <Typography className={classes.message}>Go to some website to start scanning</Typography>
-        </>
+      {revealed && (
+        <Box sx={{ width: '100%', mt: 1 }}>
+          <List disablePadding>
+            {hiddenEntries.map((soft) => (
+              <Software key={soft.software} {...soft} />
+            ))}
+          </List>
+        </Box>
       )}
-    </Box>
+    </StatusState>
   );
 };
 
