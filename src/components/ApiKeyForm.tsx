@@ -1,9 +1,18 @@
 import { useState } from 'react';
 import type { ChangeEvent, FC } from 'react';
-import { Box, Button, IconButton, List, ListSubheader, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  Button,
+  IconButton,
+  InputAdornment,
+  List,
+  ListSubheader,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { inject, observer } from 'mobx-react';
-import { Close } from '@mui/icons-material';
+import { Close, Visibility, VisibilityOff } from '@mui/icons-material';
 import type { Stores } from '../stores/types';
 
 const useStyles = makeStyles()((theme) => ({
@@ -32,17 +41,21 @@ type Props = OwnProps & Pick<Stores, 'settingsStore'>;
 const ApiKeyForm: FC<Props> = ({ settingsStore, onClose, onSuccess }) => {
   const { classes } = useStyles();
   const [value, setValue] = useState(settingsStore.apiKey);
-  const [hidden, setHidden] = useState(true);
+  const [visible, setVisible] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const handleSaveKey = () => {
-    if (!value) {
+    const apiKey = value.trim();
+    if (!apiKey) {
       return setError('API Key can not be empty');
     }
 
-    settingsStore.validateAPIKey(value, (response) => {
+    setSaving(true);
+    settingsStore.validateAPIKey(apiKey, (response) => {
+      setSaving(false);
       if (response.valid) {
-        settingsStore.setApiKey(value);
+        settingsStore.setApiKey(apiKey);
         onSuccess();
       } else {
         setError('API Key is not valid');
@@ -54,10 +67,6 @@ const ApiKeyForm: FC<Props> = ({ settingsStore, onClose, onSuccess }) => {
     setError('');
     setValue(e.target.value);
   };
-
-  const displayValue = hidden
-    ? value.slice(0, 3) + ' * * * * ' + value.slice(value.length - 3, value.length)
-    : value;
 
   return (
     <List
@@ -89,16 +98,30 @@ const ApiKeyForm: FC<Props> = ({ settingsStore, onClose, onSuccess }) => {
         <TextField
           label="API Key"
           fullWidth
-          value={displayValue}
+          type={visible ? 'text' : 'password'}
+          value={value}
           error={!!error}
           helperText={error}
           onChange={handleChange}
-          onClick={() => hidden && setHidden(false)}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label={visible ? 'Hide API key' : 'Show API key'}
+                  onClick={() => setVisible((prev) => !prev)}
+                  edge="end"
+                  size="small"
+                >
+                  {visible ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
 
         <Box mt={2} display="flex" justifyContent="flex-end">
-          <Button color="primary" onClick={handleSaveKey}>
-            Save
+          <Button color="primary" onClick={handleSaveKey} disabled={saving}>
+            {saving ? 'Checking…' : 'Save'}
           </Button>
         </Box>
       </Box>

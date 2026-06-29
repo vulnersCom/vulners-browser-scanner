@@ -28,6 +28,7 @@ const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
   const [apiKey, setApiKey] = useState(settingsStore.apiKey);
   const [apiKeyError, setApiKeyError] = useState('');
   const [fieldOpen, setFieldOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleChangeKey = (key: string) => {
     setApiKey(key);
@@ -35,13 +36,16 @@ const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
   };
 
   const handleSaveKey = () => {
-    if (!settingsStore.apiKey && !apiKey) {
+    const key = apiKey.trim();
+    if (!key) {
       return setApiKeyError('API Key can not be empty');
     }
 
-    settingsStore.validateAPIKey(apiKey, (response) => {
+    setSaving(true);
+    settingsStore.validateAPIKey(key, (response) => {
+      setSaving(false);
       if (response.valid) {
-        settingsStore.setApiKey(apiKey);
+        settingsStore.setApiKey(key);
         onNextClick();
       } else {
         setApiKeyError('API Key is not valid');
@@ -115,8 +119,8 @@ const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
             />
 
             <Box display="flex" justifyContent="center" mt={3}>
-              <Button disabled={!apiKey} color="primary" onClick={handleSaveKey}>
-                Save
+              <Button disabled={!apiKey || saving} color="primary" onClick={handleSaveKey}>
+                {saving ? 'Checking…' : 'Save'}
               </Button>
             </Box>
           </Collapse>
