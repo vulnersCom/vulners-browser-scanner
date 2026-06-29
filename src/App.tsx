@@ -39,17 +39,22 @@ const AppLayout = inject(
 ) as unknown as FC<{ children?: ReactNode }>;
 
 const App: FC<Stores> = ({ settingsStore, dataStore }) => {
-  const openLink = (url?: string) =>
-    url && v_browser.runtime.sendMessage({ action: 'open_link', url });
-
   useEffect(() => {
-    document.querySelectorAll('a').forEach((a) =>
-      a.addEventListener('click', (e) => {
-        const target = e.target as HTMLAnchorElement | null;
-        openLink(target?.href || (target?.parentElement as HTMLAnchorElement | null)?.href);
-      })
-    );
-  });
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target.closest('a') : null;
+      const href = target?.getAttribute('href');
+      if (!href || href === '#') return;
+
+      const url = new URL(href, window.location.href);
+      if (!['http:', 'https:'].includes(url.protocol)) return;
+
+      event.preventDefault();
+      v_browser.runtime.sendMessage({ action: 'open_link', url: url.href });
+    };
+
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
 
   useEffect(() => {
     dataStore.loadData();
