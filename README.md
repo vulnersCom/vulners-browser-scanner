@@ -16,19 +16,29 @@ Web-extension based on vulners Vulnerability scanner API
 
 ## Development
 
-### Dev
+### Dev (watch build)
 
 ```shell
-yarn
-yarn start
+npm install
+npm run watch
 ```
 
-Application will start at localhost:3000
+esbuild rebuilds the unpacked extension into `./build` on every change — load
+that folder via **chrome://extensions/** → "Load unpacked".
 
 ### Build
 
 ```shell
-yarn build
+npm run build
 ```
 
-Extension will be packaged into `./build` folder
+Extension will be packaged into `./build` folder.
+
+### Quality gates
+
+```shell
+npm run typecheck   # tsc --noEmit (app + tests)
+npm run lint        # ESLint (flat config)
+npm run format      # Prettier
+npm test            # Jest
+```
