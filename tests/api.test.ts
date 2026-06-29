@@ -94,8 +94,9 @@ describe('VulnersClient', () => {
     const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
     expect(body.software).toEqual([{ product: 'nginx', version: '1.24.0' }]);
     expect(body.fields).toEqual(
-      expect.arrayContaining(['id', 'title', 'type', 'description', 'enchantments', 'metrics'])
+      expect.arrayContaining(['title', 'type', 'description', 'enchantments', 'metrics'])
     );
+    expect(body.fields).not.toContain('id');
   });
 
   it('maps cpe and cpe3 rule aliases into v4 audit software objects', async () => {
