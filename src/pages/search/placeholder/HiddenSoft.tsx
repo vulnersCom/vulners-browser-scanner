@@ -13,8 +13,6 @@ const useStyles = makeStyles()((theme) => ({
 interface Props {
   soft?: SoftwareEntry[];
   onClick?: MouseEventHandler;
-  /** Accepted for the NotVulnerable call site; unused when empty. */
-  hiddenSoft?: SoftwareEntry[];
 }
 
 const HiddenSoft: FC<Props> = ({ soft, onClick }) => {

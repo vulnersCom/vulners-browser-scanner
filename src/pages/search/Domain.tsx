@@ -24,13 +24,16 @@ interface OwnProps {
 const Domain: FC<OwnProps> = ({ name = '', software = {} }) => {
   const { classes } = useStyles();
 
-  const storeShowOnlyVulnerable = useSettingsStore((s) => s.showOnlyVulnerable);
-  const [showOnlyVulnerable, setShowOnlyVulnerable] = useState(storeShowOnlyVulnerable);
+  // Read the global filter live (no stale snapshot); `revealed` is a local
+  // per-domain override so the user can expand the hidden fingerprints.
+  const showOnlyVulnerable = useSettingsStore((s) => s.showOnlyVulnerable);
+  const [revealed, setRevealed] = useState(false);
+  const filterToVulnerable = showOnlyVulnerable && !revealed;
 
   let softToShow: SoftwareEntry[] = [];
   const softToHide: SoftwareEntry[] = [];
 
-  if (showOnlyVulnerable) {
+  if (filterToVulnerable) {
     for (const soft of Object.values(software)) {
       if (soft.vulnerabilities.length) {
         softToShow.push(soft);
@@ -56,12 +59,7 @@ const Domain: FC<OwnProps> = ({ name = '', software = {} }) => {
           ))}
         </List>
 
-        {showOnlyVulnerable && (
-          <HiddenSoft
-            soft={softToHide}
-            onClick={() => setShowOnlyVulnerable(!showOnlyVulnerable)}
-          />
-        )}
+        {filterToVulnerable && <HiddenSoft soft={softToHide} onClick={() => setRevealed(true)} />}
       </Paper>
     </Box>
   );

@@ -3,7 +3,7 @@ import HiddenSoft from './HiddenSoft';
 import { CloudDoneOutlined, OpenInBrowser } from '@mui/icons-material';
 import { Box, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import type { HostData, SoftwareEntry } from '../../../types';
+import type { HostData } from '../../../types';
 
 const useStyles = makeStyles()((theme) => ({
   box: {
@@ -22,13 +22,15 @@ const useStyles = makeStyles()((theme) => ({
 interface Props {
   url?: string;
   data?: HostData[];
-  hiddenSoft?: HostData | SoftwareEntry[];
+  hiddenSoft?: HostData;
 }
 
 const DOMAIN_REGEX = /(?:[\w-]+\.)*([\w-]{1,63})(?:\.(?:\w{3}|\w{2}))(?:$|\/)/i;
 
 const NotVulnerable: FC<Props> = ({ url, hiddenSoft }) => {
   const { classes } = useStyles();
+
+  const hiddenEntries = hiddenSoft ? Object.values(hiddenSoft.software) : [];
 
   let icon: ReactNode;
   let text: ReactNode;
@@ -37,7 +39,7 @@ const NotVulnerable: FC<Props> = ({ url, hiddenSoft }) => {
     text = (
       <span>
         <p>Seems current host is not Vulnerable</p>
-        <HiddenSoft hiddenSoft={hiddenSoft as SoftwareEntry[]} />
+        <HiddenSoft soft={hiddenEntries} />
       </span>
     );
   } else {
