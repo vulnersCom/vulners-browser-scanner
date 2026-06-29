@@ -7,7 +7,15 @@ const config: Config = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
-  collectCoverageFrom: ['src/api.ts', 'src/Browser.ts', 'src/sanitize.ts'],
+  collectCoverageFrom: [
+    'src/api.ts',
+    'src/Browser.ts',
+    'src/sanitize.ts',
+    'src/scan.ts',
+    'src/search.ts',
+    'src/stores/Settings.ts',
+    'src/stores/Data.ts',
+  ],
   coverageThreshold: {
     global: { statements: 75, branches: 55, functions: 70, lines: 75 },
   },

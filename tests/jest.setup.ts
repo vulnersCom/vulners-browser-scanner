@@ -1,3 +1,9 @@
+/* jsdom lacks TextEncoder/TextDecoder; use Node's. */
+import { TextEncoder, TextDecoder } from 'node:util';
+const g = globalThis as unknown as { TextEncoder?: unknown; TextDecoder?: unknown };
+g.TextEncoder ??= TextEncoder;
+g.TextDecoder ??= TextDecoder;
+
 /* Minimal chrome extension API mock shared by tests. */
 const chromeMock = {
   tabs: {
