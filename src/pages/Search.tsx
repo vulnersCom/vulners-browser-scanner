@@ -3,8 +3,9 @@ import type { FC } from 'react';
 import Domain from './search/Domain';
 import NotVulnerable from './search/placeholder/NotVulnerable';
 import NotFound from './search/placeholder/NotFound';
-import { Box, IconButton, TextField } from '@mui/material';
+import { Box, InputBase } from '@mui/material';
 import { SearchOutlined } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import { makeStyles } from 'tss-react/mui';
 import type { HostData } from '../types';
 import { useDataStore } from '../stores/Data';
@@ -18,19 +19,22 @@ const useStyles = makeStyles()({
     flexDirection: 'column',
   },
   data: {
+    flex: 1,
     overflowY: 'scroll',
     scrollbarWidth: 'none' /* Firefox */,
     '&::-webkit-scrollbar': {
       display: 'none',
     },
-    '& >div:last-child': {
-      marginBottom: '56px',
-    },
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    padding: '10px 14px 16px',
   },
 });
 
 const Search: FC = () => {
   const { classes } = useStyles();
+  const { tokens } = useTheme();
   const [searchValue, setSearchValue] = useState('');
 
   const url = useDataStore((s) => s.url);
@@ -71,18 +75,35 @@ const Search: FC = () => {
   return (
     <div className={classes.root}>
       {showAllDomains && (
-        <Box sx={{ display: 'flex', pr: 2, alignItems: 'center' }}>
-          <IconButton>
-            <SearchOutlined />
-          </IconButton>
-          <TextField
-            value={searchValue}
-            fullWidth
-            onChange={(e) => setSearchValue(e.target.value)}
-          />
+        <Box sx={{ padding: '12px 14px 6px', background: tokens.bg, flex: '0 0 auto' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              height: 40,
+              padding: '0 12px',
+              border: `1px solid ${tokens.line}`,
+              borderRadius: '10px',
+              background: tokens.surface2,
+            }}
+          >
+            <SearchOutlined sx={{ fontSize: 17, color: tokens.text3 }} />
+            <InputBase
+              value={searchValue}
+              fullWidth
+              placeholder="Search software, host or CVE…"
+              onChange={(e) => setSearchValue(e.target.value)}
+              sx={{
+                fontSize: 13,
+                color: tokens.text,
+                '& input::placeholder': { color: tokens.text3, opacity: 1 },
+              }}
+            />
+          </Box>
         </Box>
       )}
-      <Box className={classes.data} sx={{ flex: 1 }}>
+      <Box className={classes.data}>
         {searchValue && !list.length && <NotFound />}
         {list.map((domain) => (
           <Domain

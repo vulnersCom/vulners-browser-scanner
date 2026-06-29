@@ -1,14 +1,8 @@
 import type { FC, MouseEventHandler } from 'react';
 import { Box, Link, Typography } from '@mui/material';
-import { makeStyles } from 'tss-react/mui';
+import { KeyboardArrowDown } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import type { SoftwareEntry } from '../../../types';
-
-const useStyles = makeStyles()((theme) => ({
-  hidden: {
-    fontWeight: 400,
-    color: theme.palette.primary.main,
-  },
-}));
 
 interface Props {
   soft?: SoftwareEntry[];
@@ -17,25 +11,44 @@ interface Props {
 }
 
 const HiddenSoft: FC<Props> = ({ soft, onClick, align = 'right' }) => {
-  const { classes } = useStyles();
+  const { tokens } = useTheme();
   if (!soft || !soft.length) {
     return null;
   }
+
+  const count = soft.length;
+  const plural = count > 1 ? 's' : '';
 
   return (
     <Box
       sx={{
         display: 'flex',
         justifyContent: align === 'center' ? 'center' : 'flex-end',
-        pr: align === 'center' ? 0 : 1,
-        pb: 1,
       }}
     >
-      <Typography variant="subtitle2" color="textSecondary" align={align}>
-        <Link href="#" onClick={onClick} className={classes.hidden}>
-          {soft.length} fingerprint{soft.length > 1 && 's'}&nbsp;hidden
+      {onClick ? (
+        <Link
+          component="button"
+          onClick={onClick}
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            color: tokens.accent,
+            fontSize: 12.5,
+            fontWeight: 500,
+            textDecoration: 'none',
+            cursor: 'pointer',
+          }}
+        >
+          Show {count} hidden fingerprint{plural}
+          <KeyboardArrowDown sx={{ fontSize: 16 }} />
         </Link>
-      </Typography>
+      ) : (
+        <Typography sx={{ color: tokens.text3, fontSize: 12.5, fontWeight: 500 }}>
+          {count} fingerprint{plural} hidden
+        </Typography>
+      )}
     </Box>
   );
 };
