@@ -6,6 +6,15 @@
  */
 import { vulners } from './api';
 import { clampLength } from './sanitize';
+import {
+  extractDomain,
+  getScoreColor,
+  hasExploit,
+  maxScore,
+  normalizeVulnerabilities,
+  parseStored,
+  readTextUpToLimit,
+} from './scan';
 import type {
   DataMap,
   ExternalSetKeyRequest,
@@ -17,7 +26,6 @@ import type {
   VulnerabilitiesResponse,
   VulnersError,
   VulnersSearchItem,
-  VulnersSource,
 } from './types';
 
 const storage = chrome.storage.local;
@@ -34,22 +42,6 @@ const DEFAULT_SETTINGS: Settings = {
   introStep: 0,
   error: '',
 };
-
-const DOMAIN_REGEX = /http(?:s)?:\/\/(?:[\w-]+\.)*([\w-]{1,63})(?:\.(?:\w{2,18}))(?:$|\/)/i;
-const PUNYCODE_DOMAIN_REGEX = /http(?:s)?:\/\/(([\w-]{1,63})\.([\w-]{8,15}))(?:$|\/)/i;
-
-const COLORS = [
-  '#00c400',
-  '#00e020',
-  '#00f000',
-  '#d1ff00',
-  '#ffe000',
-  '#ffcc00',
-  '#ffbc10',
-  '#ff9c20',
-  '#ff8000',
-  '#ff0000',
-];
 
 const STATIC_RESPONSE_TYPES = ['script', 'font', 'stylesheet', 'other'];
 const REQUEST_TIMEOUT = 300;
@@ -87,14 +79,6 @@ function createThrottle(minIntervalMs: number) {
 
 const throttle = createThrottle(REQUEST_TIMEOUT);
 
-function parseStored<T>(raw: unknown, fallback: T): T {
-  try {
-    return typeof raw === 'string' ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 async function loadState(): Promise<void> {
   const stored = await storage.get([LS_KEY_DATA, LS_KEY_STAT, LS_KEY_EXTRA_DATA, LS_KEY_SETTINGS]);
   data = parseStored<DataMap>(stored[LS_KEY_DATA], {});
@@ -108,27 +92,6 @@ async function loadState(): Promise<void> {
 
 function getCurrentTab(): Promise<chrome.tabs.Tab[]> {
   return chrome.tabs.query({ active: true, currentWindow: true });
-}
-
-function extractDomain(url: string): string | null {
-  const matched = url.match(DOMAIN_REGEX);
-  if (matched) {
-    return new URL(matched[0]).host;
-  }
-  // `punycode` is unavailable in MV3 service workers; return the raw matched
-  // host instead of decoding it (which used to throw and abort the scan).
-  const puny = url.match(PUNYCODE_DOMAIN_REGEX);
-  return puny ? puny[1] : null;
-}
-
-function getScore(source: VulnersSource): number {
-  const cvss = source.cvss?.score ?? 0;
-  const enchantment = source.enchantments?.score?.value ?? 0;
-  return Math.max(cvss, enchantment);
-}
-
-function getScoreColor(score: number): string {
-  return COLORS[Math.round(score) - 1] ?? COLORS[0];
 }
 
 /* ------------------------------------------------------------------ *
@@ -178,47 +141,6 @@ function findFingerprintsInHeaders(response: chrome.webRequest.OnCompletedDetail
 
   const headers = (response.responseHeaders ?? []).map((r) => `${r.name}: ${r.value}`).join('\n');
   findFingerprints(url, headers);
-}
-
-async function readTextUpToLimit(response: Response, maxBytes: number): Promise<string> {
-  const contentLength = Number(response.headers.get('content-length') ?? 0);
-  if (contentLength > maxBytes) return '';
-
-  if (!response.body) {
-    const text = await response.text();
-    return text.slice(0, maxBytes);
-  }
-
-  const reader = response.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let received = 0;
-
-  try {
-    while (received < maxBytes) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const remaining = maxBytes - received;
-      if (value.byteLength > remaining) {
-        chunks.push(value.slice(0, remaining));
-        received += remaining;
-        await reader.cancel();
-        break;
-      }
-      chunks.push(value);
-      received += value.byteLength;
-    }
-  } finally {
-    reader.releaseLock();
-  }
-
-  const buffer = new Uint8Array(received);
-  let offset = 0;
-  for (const chunk of chunks) {
-    buffer.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  return new TextDecoder().decode(buffer);
 }
 
 function findFingerprintsInStatic(url: string, checkUrl: string): void {
@@ -281,22 +203,10 @@ function processError(error: VulnersError): void {
   }
 }
 
-const EXPLOIT_TYPES = ['exploitdb', 'githubexploit', 'packetstorm'];
-
 function addVulnerabilities(host: string, rule: Rule, items: VulnersSearchItem[]): void {
-  const vulnerabilities = items
-    .map(({ _source: s }) => ({
-      id: s.id,
-      type: s.type,
-      title: s.title === s.id ? s.description : s.title,
-      score: getScore(s),
-      scoreColor: getScoreColor(s.cvss?.score ?? 0),
-      description: s.description,
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  const exploit = vulnerabilities.some((v) => EXPLOIT_TYPES.includes(v.type));
-  const score = vulnerabilities.reduce((max, v) => Math.max(max, v.score), 0);
+  const vulnerabilities = normalizeVulnerabilities(items);
+  const exploit = hasExploit(vulnerabilities);
+  const score = maxScore(vulnerabilities);
   const current = data[host];
   const vulnerable = vulnerabilities.length > 0 || current.vulnerable;
 
@@ -373,8 +283,12 @@ async function handleRuntimeMessage(
       Object.assign(settings, request.settings);
       void storage.set({ [LS_KEY_SETTINGS]: JSON.stringify(settings) });
       sendResponse({ settings });
-      // Rules now require the API key (Cloudflare); reload them on key change.
-      if (keyChanged) void loadRules();
+      // On key change: drop lookups cached under the old key and reload rules
+      // (rules require the API key behind Cloudflare).
+      if (keyChanged) {
+        vulners.clearCache();
+        void loadRules();
+      }
       return;
     }
     case 'landing_seen':
@@ -436,6 +350,7 @@ async function handleExternalMessage(
     }
     settings.apiKey = request.apiKey;
     void storage.set({ [LS_KEY_SETTINGS]: JSON.stringify(settings) });
+    vulners.clearCache();
     void loadRules();
     sendResponse({ success: true });
   }
