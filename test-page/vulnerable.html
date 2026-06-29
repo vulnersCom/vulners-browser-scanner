@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Generator fingerprints (CMS detection) -->
+    <meta name="generator" content="WordPress 4.2.2" />
+    <meta name="generator" content="Drupal 7.50 (https://www.drupal.org)" />
+    <meta name="generator" content="Joomla! - Open Source Content Management" />
+
+    <title>Vulners Scanner — Test Page (intentionally "vulnerable")</title>
+
+    <!--
+      This page is a TEST FIXTURE for the Vulners Browser Scanner.
+      It references OLD, KNOWN-VULNERABLE versions of popular libraries so the
+      extension's content script can fingerprint them and look up CVEs.
+      The referenced files do NOT need to exist — the scanner matches the HTML
+      source, so 404s are fine.
+
+      IMPORTANT: load this over http(s), NOT file:// — the content script only
+      runs on http/https pages. e.g.:
+          cd test-page && python3 -m http.server 8000
+          open http://localhost:8000/vulnerable.html
+    -->
+
+    <!-- Old jQuery (multiple CVEs: XSS in $.html, etc.) -->
+    <script src="/assets/js/jquery-1.4.2.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <script src="/vendor/jquery/jquery-2.1.4.js"></script>
+
+    <!-- jQuery UI (CVE-2016-7103 XSS, etc.) -->
+    <script src="/assets/js/jquery-ui-1.10.4.min.js"></script>
+
+    <!-- jQuery Migrate -->
+    <script src="/assets/js/jquery-migrate-1.2.1.min.js"></script>
+
+    <!-- Bootstrap 3.3.7 (XSS in data-target, CVE-2018-14041, etc.) -->
+    <link rel="stylesheet" href="/assets/css/bootstrap-3.3.7.min.css" />
+    <script src="/assets/js/bootstrap-3.3.7.min.js"></script>
+
+    <!-- AngularJS 1.5.8 (multiple XSS / sandbox bypass CVEs) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+
+    <!-- Lodash 4.17.4 (CVE-2018-3721, CVE-2019-10744 prototype pollution) -->
+    <script src="/vendor/lodash/lodash-4.17.4.min.js"></script>
+
+    <!-- Moment.js 2.19.3 (CVE-2017-18214 ReDoS) -->
+    <script src="/vendor/moment/moment-2.19.3.min.js"></script>
+
+    <!-- Handlebars 4.0.5 (prototype pollution / RCE CVEs) -->
+    <script src="/vendor/handlebars/handlebars-4.0.5.min.js"></script>
+
+    <!-- DOMPurify 0.8.5 (mXSS bypass CVEs) -->
+    <script src="/vendor/dompurify/purify-0.8.5.min.js"></script>
+
+    <!-- CKEditor 4.5.11 (XSS CVEs) -->
+    <script src="/vendor/ckeditor/ckeditor-4.5.11.js"></script>
+
+    <!-- TinyMCE 4.2.4 (XSS CVEs) -->
+    <script src="/vendor/tinymce/tinymce-4.2.4.min.js"></script>
+  </head>
+
+  <body>
+    <h1>Vulners Scanner — vulnerable test page</h1>
+
+    <p>
+      This page intentionally advertises outdated JavaScript libraries and CMS versions so the
+      <strong>Vulners Browser Scanner</strong> can detect them. Open the extension popup after this
+      page loads — the toolbar badge should show a count, and the popup should list the components
+      below with their CVEs.
+    </p>
+
+    <h2>Components this page claims to run</h2>
+    <ul>
+      <li>jQuery 1.4.2 / 1.7.2 / 2.1.4</li>
+      <li>jQuery UI 1.10.4, jQuery Migrate 1.2.1</li>
+      <li>Bootstrap 3.3.7</li>
+      <li>AngularJS 1.5.8</li>
+      <li>Lodash 4.17.4</li>
+      <li>Moment.js 2.19.3</li>
+      <li>Handlebars 4.0.5</li>
+      <li>DOMPurify 0.8.5</li>
+      <li>CKEditor 4.5.11, TinyMCE 4.2.4</li>
+      <li>WordPress 4.2.2 / Drupal 7.50 / Joomla (generator meta tags)</li>
+    </ul>
+
+    <!-- Inline version comments — extra fingerprint surface -->
+    <!-- jQuery JavaScript Library v1.4.2 -->
+    <!-- AngularJS v1.5.8 -->
+    <!-- Bootstrap v3.3.7 (https://getbootstrap.com) -->
+
+    <script>
+      // Some libraries expose their version in code; included as extra fingerprints.
+      window.jQuery = { fn: { jquery: '1.4.2' } };
+      window.angular = { version: { full: '1.5.8' } };
+    </script>
+  </body>
+</html>
