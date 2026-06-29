@@ -53,6 +53,7 @@ const COLORS = [
 
 const STATIC_RESPONSE_TYPES = ['script', 'font', 'stylesheet', 'other'];
 const REQUEST_TIMEOUT = 300;
+const STATIC_SCAN_MAX_BYTES = 512 * 1024;
 
 let data: DataMap = {};
 let stat: ScanStat = { vulnerable: 0, scanned: 0 };
@@ -99,7 +100,10 @@ async function loadState(): Promise<void> {
   data = parseStored<DataMap>(stored[LS_KEY_DATA], {});
   stat = parseStored<ScanStat>(stored[LS_KEY_STAT], { vulnerable: 0, scanned: 0 });
   extraData = parseStored<string[]>(stored[LS_KEY_EXTRA_DATA], []);
-  settings = parseStored<Settings>(stored[LS_KEY_SETTINGS], { ...DEFAULT_SETTINGS });
+  settings = {
+    ...DEFAULT_SETTINGS,
+    ...parseStored<Partial<Settings>>(stored[LS_KEY_SETTINGS], {}),
+  };
 }
 
 function getCurrentTab(): Promise<chrome.tabs.Tab[]> {
@@ -176,9 +180,50 @@ function findFingerprintsInHeaders(response: chrome.webRequest.OnCompletedDetail
   findFingerprints(url, headers);
 }
 
+async function readTextUpToLimit(response: Response, maxBytes: number): Promise<string> {
+  const contentLength = Number(response.headers.get('content-length') ?? 0);
+  if (contentLength > maxBytes) return '';
+
+  if (!response.body) {
+    const text = await response.text();
+    return text.slice(0, maxBytes);
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+
+  try {
+    while (received < maxBytes) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const remaining = maxBytes - received;
+      if (value.byteLength > remaining) {
+        chunks.push(value.slice(0, remaining));
+        received += remaining;
+        await reader.cancel();
+        break;
+      }
+      chunks.push(value);
+      received += value.byteLength;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const buffer = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    buffer.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return new TextDecoder().decode(buffer);
+}
+
 function findFingerprintsInStatic(url: string, checkUrl: string): void {
   fetch(checkUrl)
-    .then((r) => r.text())
+    .then((r) => readTextUpToLimit(r, STATIC_SCAN_MAX_BYTES))
     .then((body) => findFingerprints(url, checkUrl + body))
     .catch((e) => console.warn('[VULNERS] static scan failed', e));
 }
@@ -290,95 +335,115 @@ function addVulnerabilities(host: string, rule: Rule, items: VulnersSearchItem[]
  * Message handlers
  * ------------------------------------------------------------------ */
 
+async function handleRuntimeMessage(
+  request: RuntimeRequest,
+  sender: chrome.runtime.MessageSender,
+  sendResponse: (response?: unknown) => void
+): Promise<void> {
+  await ensureReady();
+
+  switch (request.action) {
+    case 'show_vulnerabilities':
+      if (sender.id === chrome.runtime.id) {
+        const tabs = await getCurrentTab();
+        const response: VulnerabilitiesResponse = {
+          data: Object.values(data),
+          stat,
+          settings,
+          landingSeen,
+          url: extractDomain(tabs[0]?.url ?? '') ?? '',
+        };
+        sendResponse(response);
+      }
+      return;
+    case 'load_settings':
+      if (sender.id === chrome.runtime.id) {
+        sendResponse({ settings });
+      }
+      return;
+    case 'get_regexp':
+      sendResponse(rules);
+      return;
+    case 'open_link':
+      void chrome.tabs.create({ active: true, url: request.url });
+      return;
+    case 'change_settings': {
+      const keyChanged =
+        request.settings.apiKey !== undefined && request.settings.apiKey !== settings.apiKey;
+      Object.assign(settings, request.settings);
+      void storage.set({ [LS_KEY_SETTINGS]: JSON.stringify(settings) });
+      sendResponse({ settings });
+      // Rules now require the API key (Cloudflare); reload them on key change.
+      if (keyChanged) void loadRules();
+      return;
+    }
+    case 'landing_seen':
+      landingSeen = true;
+      sendResponse(landingSeen);
+      return;
+    case 'clear_data':
+      data = {};
+      extraData = [];
+      landingSeen = false;
+      stat = { vulnerable: 0, scanned: 0 };
+      settings.error = '';
+      void storage.set({
+        [LS_KEY_DATA]: JSON.stringify(data),
+        [LS_KEY_STAT]: JSON.stringify(stat),
+        [LS_KEY_EXTRA_DATA]: JSON.stringify(extraData),
+        [LS_KEY_SETTINGS]: JSON.stringify(settings),
+      });
+      void getCurrentTab().then((tabs) => sendResponse({ tab: tabs[0], data, stat }));
+      return;
+    case 'match':
+      request.matches.forEach((m: Match) => addMatchedFingerprint(m.url, m.rule, m.version));
+      return;
+    case 'validate_key':
+      vulners
+        .validateKey(request.apiKey)
+        .then((r) => sendResponse({ ...r.data }))
+        .catch((e) => {
+          console.error('[VULNERS] validate key failed', e);
+          sendResponse({ valid: false });
+        });
+      return;
+  }
+}
+
 chrome.runtime.onMessage.addListener(
   (request: RuntimeRequest, sender, sendResponse: (response?: unknown) => void) => {
-    switch (request.action) {
-      case 'show_vulnerabilities':
-        if (sender.id === chrome.runtime.id) {
-          void getCurrentTab().then((tabs) => {
-            const response: VulnerabilitiesResponse = {
-              data: Object.values(data),
-              stat,
-              settings,
-              landingSeen,
-              url: extractDomain(tabs[0]?.url ?? '') ?? '',
-            };
-            sendResponse(response);
-          });
-        }
-        return true;
-      case 'load_settings':
-        if (sender.id === chrome.runtime.id) {
-          void getCurrentTab().then(() => sendResponse({ settings }));
-        }
-        return true;
-      case 'get_regexp':
-        sendResponse(rules);
-        return true;
-      case 'open_link':
-        void chrome.tabs.create({ active: true, url: request.url });
-        return true;
-      case 'change_settings': {
-        const keyChanged =
-          request.settings.apiKey !== undefined && request.settings.apiKey !== settings.apiKey;
-        Object.assign(settings, request.settings);
-        void storage.set({ [LS_KEY_SETTINGS]: JSON.stringify(settings) });
-        sendResponse({ settings });
-        // Rules now require the API key (Cloudflare); reload them on key change.
-        if (keyChanged) void loadRules();
-        return true;
-      }
-      case 'landing_seen':
-        landingSeen = true;
-        sendResponse(landingSeen);
-        return true;
-      case 'clear_data':
-        data = {};
-        extraData = [];
-        landingSeen = false;
-        stat = { vulnerable: 0, scanned: 0 };
-        settings.error = '';
-        void storage.set({
-          [LS_KEY_DATA]: JSON.stringify(data),
-          [LS_KEY_STAT]: JSON.stringify(stat),
-          [LS_KEY_EXTRA_DATA]: JSON.stringify(extraData),
-          [LS_KEY_SETTINGS]: JSON.stringify(settings),
-        });
-        void getCurrentTab().then((tabs) => sendResponse({ tab: tabs[0], data, stat }));
-        return true;
-      case 'match':
-        request.matches.forEach((m: Match) => addMatchedFingerprint(m.url, m.rule, m.version));
-        return true;
-      case 'validate_key':
-        vulners
-          .validateKey(request.apiKey)
-          .then((r) => sendResponse({ ...r.data }))
-          .catch((e) => {
-            console.error('[VULNERS] validate key failed', e);
-            sendResponse({ valid: false });
-          });
-        return true;
-    }
+    void handleRuntimeMessage(request, sender, sendResponse);
     return true;
   }
 );
 
+async function handleExternalMessage(
+  request: ExternalSetKeyRequest,
+  sender: chrome.runtime.MessageSender,
+  sendResponse: (response?: unknown) => void
+): Promise<void> {
+  if (sender.origin !== 'https://vulners.com') {
+    console.error('[EXTERNAL MESSAGE] forbidden sender', sender);
+    return;
+  }
+
+  await ensureReady();
+
+  if (request.action === 'set_key') {
+    if (!request.apiKey) {
+      console.error('[SET API KEY] key can not be null', request);
+      return;
+    }
+    settings.apiKey = request.apiKey;
+    void storage.set({ [LS_KEY_SETTINGS]: JSON.stringify(settings) });
+    void loadRules();
+    sendResponse({ success: true });
+  }
+}
+
 chrome.runtime.onMessageExternal.addListener(
   (request: ExternalSetKeyRequest, sender, sendResponse: (response?: unknown) => void) => {
-    if (sender.origin !== 'https://vulners.com') {
-      console.error('[EXTERNAL MESSAGE] forbidden sender', sender);
-      return true;
-    }
-    if (request.action === 'set_key') {
-      if (!request.apiKey) {
-        console.error('[SET API KEY] key can not be null', request);
-        return true;
-      }
-      settings.apiKey = request.apiKey;
-      void storage.set({ [LS_KEY_SETTINGS]: JSON.stringify(settings) });
-      void loadRules();
-      sendResponse({ success: true });
-    }
+    void handleExternalMessage(request, sender, sendResponse);
     return true;
   }
 );
@@ -388,7 +453,9 @@ chrome.runtime.onMessageExternal.addListener(
  * ------------------------------------------------------------------ */
 
 chrome.webRequest.onCompleted.addListener(
-  findFingerprintsInHeaders,
+  (response) => {
+    void ensureReady().then(() => findFingerprintsInHeaders(response));
+  },
   { urls: ['http://*/*', 'https://*/*'] },
   ['responseHeaders']
 );
@@ -396,19 +463,24 @@ chrome.webRequest.onCompleted.addListener(
 chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
   if (info.status === 'complete') {
     chrome.action.enable(tabId);
-    decorateBadge(tab);
+    void ensureReady().then(() => decorateBadge(tab));
   } else if (info.status === 'loading') {
     chrome.action.disable(tabId);
   }
 });
 
 chrome.tabs.onActivated.addListener((info) => {
-  void chrome.tabs.get(info.tabId).then((tab) => decorateBadge(tab));
+  void ensureReady().then(() => chrome.tabs.get(info.tabId).then((tab) => decorateBadge(tab)));
 });
 
 chrome.action.setBadgeBackgroundColor({ color: '#d35400' });
 
 async function loadRules(): Promise<void> {
+  if (!settings.apiKey) {
+    rules = [];
+    return;
+  }
+
   try {
     rules = await vulners.getRules(settings.apiKey);
   } catch (e) {
@@ -416,7 +488,11 @@ async function loadRules(): Promise<void> {
   }
 }
 
-void (async () => {
+const readyPromise = (async () => {
   await loadState();
   await loadRules();
 })();
+
+function ensureReady(): Promise<void> {
+  return readyPromise;
+}
