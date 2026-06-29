@@ -1,11 +1,11 @@
 import type { FC, ReactNode } from 'react';
 import HiddenSoft from './HiddenSoft';
-import { CloudDoneOutlined, OpenInBrowser } from '@material-ui/icons';
-import { Box, Typography } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { CloudDoneOutlined, OpenInBrowser } from '@mui/icons-material';
+import { Box, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import type { HostData, SoftwareEntry } from '../../../types';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   box: {
     height: '100%',
     color: theme.palette.text.primary,
@@ -28,7 +28,7 @@ interface Props {
 const DOMAIN_REGEX = /(?:[\w-]+\.)*([\w-]{1,63})(?:\.(?:\w{3}|\w{2}))(?:$|\/)/i;
 
 const NotVulnerable: FC<Props> = ({ url, hiddenSoft }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   let icon: ReactNode;
   let text: ReactNode;

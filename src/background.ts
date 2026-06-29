@@ -360,7 +360,7 @@ chrome.runtime.onMessage.addListener(
 
 chrome.runtime.onMessageExternal.addListener(
   (request: ExternalSetKeyRequest, sender, sendResponse: (response?: unknown) => void) => {
-    if (sender.origin !== 'https://vulners.com' && sender.origin !== 'http://127.0.0.1:9001') {
+    if (sender.origin !== 'https://vulners.com') {
       console.error('[EXTERNAL MESSAGE] forbidden sender', sender);
       return true;
     }

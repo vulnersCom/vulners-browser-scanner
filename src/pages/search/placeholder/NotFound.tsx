@@ -1,15 +1,15 @@
 import type { FC } from 'react';
-import { Box, Typography } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { Box, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   text: {
     color: theme.palette.text.primary,
   },
 }));
 
 const NotFound: FC = () => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <Box display="flex" alignItems="center" justifyContent="center" style={{ height: '100%' }}>

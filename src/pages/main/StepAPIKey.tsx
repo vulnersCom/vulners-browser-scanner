@@ -10,8 +10,8 @@ import {
   Paper,
   TextField,
   Typography,
-} from '@material-ui/core';
-import { ExpandMore } from '@material-ui/icons';
+} from '@mui/material';
+import { ExpandMore } from '@mui/icons-material';
 import { inject, observer } from 'mobx-react';
 import type { Stores } from '../../stores/types';
 
@@ -67,7 +67,7 @@ const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
           </Typography>
           <Box display="flex" justifyContent="center" mt={3}>
             <Button
-              href={SERVER_URL + '/api-keys#web-extension'}
+              href={SERVER_URL + '/userinfo?tab=api-keys'}
               target="_blank"
               rel="noopener noreferrer"
               color="primary"
@@ -93,12 +93,12 @@ const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
                 <li>
                   Go to{' '}
                   <a
-                    href="https://vulners.com/api-keys"
+                    href="https://vulners.com/userinfo?tab=api-keys"
                     target="_blank"
                     rel="noreferrer"
                     className={classes.link}
                   >
-                    vulners.com/api-keys
+                    vulners.com/userinfo?tab=api-keys
                   </a>
                 </li>
                 <li>

@@ -1,11 +1,11 @@
 import type { FC, ReactNode } from 'react';
 import Header from './Header';
 import Navbar from './Navbar';
-import { makeStyles } from '@material-ui/core/styles';
-import { Box } from '@material-ui/core';
+import { makeStyles } from 'tss-react/mui';
+import { Box } from '@mui/material';
 import Error from './Error';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     height: '100%',
     backgroundColor: theme.palette.background.default,
@@ -17,7 +17,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Layout: FC<{ children?: ReactNode }> = ({ children }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <Box className={classes.root}>

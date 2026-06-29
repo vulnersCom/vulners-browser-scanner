@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Box, Link, Typography } from '@material-ui/core';
+import { Box, Link, Typography } from '@mui/material';
 
 const About: FC = () => (
   <Box p={2}>

@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import type { FC, ReactNode } from 'react';
 import { MemoryRouter, Switch, Route, useHistory } from 'react-router-dom';
-import { ThemeProvider } from '@material-ui/core/styles';
-import { CircularProgress } from '@material-ui/core';
+import { ThemeProvider } from '@mui/material/styles';
+import { CircularProgress } from '@mui/material';
 import { inject, observer } from 'mobx-react';
 
 import Layout from './components/Layout';

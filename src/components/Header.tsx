@@ -1,13 +1,13 @@
 import type { FC } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 import { inject, observer } from 'mobx-react';
-import { ArrowBack, Settings as SettingsIcon } from '@material-ui/icons';
-import { Box, IconButton, Link, Tooltip, Typography } from '@material-ui/core';
+import { ArrowBack, Settings as SettingsIcon } from '@mui/icons-material';
+import { Box, IconButton, Link, Tooltip, Typography } from '@mui/material';
 import { useHistory } from 'react-router-dom';
 import Icon from '../img/icon.svg';
 import type { Stores } from '../stores/types';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   header: {
     background: '#030303',
     color: theme.palette.secondary.main,
@@ -19,7 +19,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Header: FC<Stores> = ({ dataStore, settingsStore }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const { stat } = dataStore;
   const { open } = settingsStore;
@@ -47,22 +47,22 @@ const Header: FC<Stores> = ({ dataStore, settingsStore }) => {
         </Box>
         <Box ml={2}>
           <Tooltip title="Number of websites where vulnerabilities were found">
-            <>
+            <span>
               <span>Vulnerable&nbsp;&nbsp;</span>
               <Typography component="span" variant="body1" color="primary">
                 {stat.vulnerable || 0}
               </Typography>
-            </>
+            </span>
           </Tooltip>
         </Box>
         <Box ml={2}>
           <Tooltip title="Number of websites the extension has ever scanned">
-            <>
+            <span>
               <span>Scanned&nbsp;&nbsp;</span>
               <Typography component="span" variant="body1" color="primary">
                 {stat.scanned || 0}
               </Typography>
-            </>
+            </span>
           </Tooltip>
         </Box>
       </Box>

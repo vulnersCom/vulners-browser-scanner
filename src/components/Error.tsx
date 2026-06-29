@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Box, Typography } from '@material-ui/core';
+import { Box, Typography } from '@mui/material';
 import { inject, observer } from 'mobx-react';
 import type { Stores } from '../stores/types';
 

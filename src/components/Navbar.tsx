@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import type { FC } from 'react';
-import { Drawer } from '@material-ui/core';
+import { Drawer } from '@mui/material';
 import { inject, observer } from 'mobx-react';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 import Footer from './Footer';
 import ApiKeyForm from './ApiKeyForm';
 import Settings from './Settings';
 import type { Stores } from '../stores/types';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
   navbar: {
     display: 'flex',
     flexDirection: 'column',
@@ -17,7 +17,7 @@ const useStyles = makeStyles({
 });
 
 const Navbar: FC<Pick<Stores, 'settingsStore'>> = ({ settingsStore }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [apiKeyOpen, setApiKeyOpen] = useState(false);
 
   const handleSuccess = () => {

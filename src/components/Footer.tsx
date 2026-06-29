@@ -1,9 +1,9 @@
 import type { FC } from 'react';
-import { Box, Link, Typography } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { Box, Link, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import Logo from '../img/logo.svg';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   footer: {
     backgroundColor: theme.palette.default.main,
   },
@@ -20,7 +20,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Footer: FC = () => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <Box p={2} pt={1} pb={1} className={classes.footer}>

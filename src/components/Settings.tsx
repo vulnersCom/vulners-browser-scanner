@@ -11,7 +11,7 @@ import {
   Switch,
   Tooltip,
   Typography,
-} from '@material-ui/core';
+} from '@mui/material';
 import {
   Brightness4,
   Brightness5,
@@ -19,12 +19,12 @@ import {
   DeleteOutline,
   HelpOutline,
   VpnKey,
-} from '@material-ui/icons';
+} from '@mui/icons-material';
 import { inject, observer } from 'mobx-react';
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 import type { Stores } from '../stores/types';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
   subheader: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -48,7 +48,7 @@ interface OwnProps {
 type Props = OwnProps & Stores;
 
 const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <>

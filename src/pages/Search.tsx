@@ -4,13 +4,13 @@ import Domain from './search/Domain';
 import NotVulnerable from './search/placeholder/NotVulnerable';
 import NotFound from './search/placeholder/NotFound';
 import { inject, observer } from 'mobx-react';
-import { Box, IconButton, TextField } from '@material-ui/core';
-import { SearchOutlined } from '@material-ui/icons';
-import { makeStyles } from '@material-ui/core/styles';
+import { Box, IconButton, TextField } from '@mui/material';
+import { SearchOutlined } from '@mui/icons-material';
+import { makeStyles } from 'tss-react/mui';
 import type { HostData } from '../types';
 import type { Stores } from '../stores/types';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
   root: {
     height: '100%',
     display: 'flex',
@@ -29,7 +29,7 @@ const useStyles = makeStyles({
 });
 
 const Search: FC<Stores> = ({ dataStore, settingsStore }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {

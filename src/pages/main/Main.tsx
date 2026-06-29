@@ -1,26 +1,26 @@
 import { useState } from 'react';
 import type { FC } from 'react';
 import { inject, observer } from 'mobx-react';
-import { Box, Button, Grow, Link, MobileStepper, Typography } from '@material-ui/core';
-import { ArrowForward } from '@material-ui/icons';
-import { makeStyles } from '@material-ui/core/styles';
+import { Box, Button, Grow, Link, MobileStepper, Typography } from '@mui/material';
+import { ArrowForward } from '@mui/icons-material';
+import { makeStyles } from 'tss-react/mui';
 import Logo from '../../img/logo.svg';
 import StepSettings from './StepSettings';
 import StepAPIKey from './StepAPIKey';
 import type { Stores } from '../../stores/types';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   main: {
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
     background:
-      theme.palette.type === 'light'
+      theme.palette.mode === 'light'
         ? 'url("/img/background_light.png") 39% 4%'
         : 'url("/img/background_dark.png") 40% 4%',
     color:
-      theme.palette.type === 'light' ? theme.palette.default.main : theme.palette.secondary.main,
+      theme.palette.mode === 'light' ? theme.palette.default.main : theme.palette.secondary.main,
   },
   logo: {
     height: 60,
@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme) => ({
     width: 150,
   },
   footer: {
-    background: theme.palette.type === 'light' ? '#fff' : '#4d4d4d',
+    background: theme.palette.mode === 'light' ? '#fff' : '#4d4d4d',
   },
   link: {
     textDecoration: 'none',
@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-type Classes = ReturnType<typeof useStyles>;
+type Classes = ReturnType<typeof useStyles>['classes'];
 
 const StepWelcome: FC<{ classes: Classes; onNextClick: () => void }> = ({
   classes,
@@ -84,7 +84,7 @@ const StepWelcome: FC<{ classes: Classes; onNextClick: () => void }> = ({
 );
 
 const Main: FC<Pick<Stores, 'settingsStore'>> = ({ settingsStore }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [activeStep, setActiveStep] = useState(settingsStore.introStep);
 
   const onNextClick = () => {

@@ -1,9 +1,9 @@
 import type { FC, MouseEventHandler } from 'react';
-import { Box, Link, Typography } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { Box, Link, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import type { SoftwareEntry } from '../../../types';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   hidden: {
     fontWeight: 400,
     color: theme.palette.secondary.dark,
@@ -18,7 +18,7 @@ interface Props {
 }
 
 const HiddenSoft: FC<Props> = ({ soft, onClick }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   if (!soft || !soft.length) {
     return null;
   }

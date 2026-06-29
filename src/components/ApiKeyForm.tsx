@@ -1,20 +1,12 @@
 import { useState } from 'react';
 import type { ChangeEvent, FC } from 'react';
-import {
-  Box,
-  Button,
-  IconButton,
-  List,
-  ListSubheader,
-  TextField,
-  Typography,
-} from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { Box, Button, IconButton, List, ListSubheader, TextField, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import { inject, observer } from 'mobx-react';
-import { Close } from '@material-ui/icons';
+import { Close } from '@mui/icons-material';
 import type { Stores } from '../stores/types';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   subheader: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -38,7 +30,7 @@ interface OwnProps {
 type Props = OwnProps & Pick<Stores, 'settingsStore'>;
 
 const ApiKeyForm: FC<Props> = ({ settingsStore, onClose, onSuccess }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [value, setValue] = useState(settingsStore.apiKey);
   const [hidden, setHidden] = useState(true);
   const [error, setError] = useState('');
@@ -84,7 +76,7 @@ const ApiKeyForm: FC<Props> = ({ settingsStore, onClose, onSuccess }) => {
           Follow{' '}
           <a
             className={classes.link}
-            href="https://vulners.com/api-keys#web-extension"
+            href="https://vulners.com/userinfo?tab=api-keys"
             target="_blank"
             rel="noreferrer"
           >

@@ -2,11 +2,11 @@ import { useState } from 'react';
 
 import Score from './vulnerability/Score';
 import Vulnerability from './Vulnerability';
-import { Box, Collapse, List, ListItem, Typography } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import { Box, Collapse, List, ListItem, Typography } from '@mui/material';
+import { makeStyles } from 'tss-react/mui';
 import type { SoftwareEntry } from '../../types';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles()({
   content: {
     display: 'flex',
   },
@@ -23,7 +23,7 @@ const Software = ({
   exploit,
   vulnerabilities,
 }: SoftwareEntry) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [open, setOpen] = useState(false);
 
   return (
