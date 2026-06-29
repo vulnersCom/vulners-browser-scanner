@@ -1,0 +1,9 @@
+build
+dist
+node_modules
+coverage
+public/img
+src/img
+*.min.js
+yarn.lock
+package-lock.json

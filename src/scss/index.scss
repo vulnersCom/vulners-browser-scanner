@@ -1,14 +1,15 @@
 $color-main: #252527;
-$color-dark: #38383A;
+$color-dark: #38383a;
 $color-grey: #f7f7f7;
-$color-accent: #FF6600;
+$color-accent: #ff6600;
 
-body, #body{
+body,
+#body {
   height: 600px;
   width: 400px;
   overflow-y: hidden;
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
   //font-family: "Roboto", sans-serif;
   font-family: 'IBM Plex Sans', sans-serif;
   margin: 0;
