@@ -19,6 +19,20 @@ const dev = watch || process.argv.includes('--dev');
 /** package.json is the single source of truth for the version. */
 const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
 
+function readDevApiKey(): string {
+  if (!dev) return '';
+
+  try {
+    const env = readFileSync('.env', 'utf8');
+    const match = env.match(
+      /^(?:VULNERS_API_KEY|VITE_VULNERS_API_KEY|REACT_APP_VULNERS_API_KEY|API_KEY)=(.*)$/m
+    );
+    return match?.[1]?.trim().replace(/^['"]|['"]$/g, '') ?? '';
+  } catch {
+    return '';
+  }
+}
+
 function copyStatic(): void {
   mkdirSync(OUTDIR, { recursive: true });
   cpSync('public/index.html', `${OUTDIR}/index.html`);
@@ -56,6 +70,7 @@ const buildOptions: esbuild.BuildOptions = {
   },
   define: {
     'process.env.NODE_ENV': JSON.stringify(dev ? 'development' : 'production'),
+    __DEV_API_KEY__: JSON.stringify(readDevApiKey()),
   },
   sourcemap: dev ? 'inline' : false,
   minify: !dev,
