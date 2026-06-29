@@ -21,6 +21,7 @@ export interface Vulnerability {
   score: number;
   scoreColor: ScoreColor;
   description: string;
+  exploit?: boolean;
 }
 
 /** One detected software fingerprint and its looked-up vulnerabilities. */
@@ -88,7 +89,16 @@ export interface VulnersSource {
   title: string;
   description: string;
   cvss?: { score?: number };
-  enchantments?: { score?: { value?: number } };
+  metrics?: { cvss?: { score?: number }; epss?: { epss?: number } };
+  enchantments?: {
+    score?: { value?: number };
+    dependencies?: { references?: VulnersReference[] };
+  };
+}
+
+export interface VulnersReference {
+  type?: string;
+  idList?: string[];
 }
 
 export interface VulnersSearchItem {
@@ -103,6 +113,16 @@ export interface VulnersError {
 export interface VulnersSoftwareResponse {
   result?: string;
   data: { search?: VulnersSearchItem[] } & Partial<VulnersError>;
+}
+
+export interface VulnersAuditResult {
+  vulnerabilities?: VulnersSource[];
+}
+
+export interface VulnersAuditResponse {
+  result?: VulnersAuditResult[] | string;
+  data?: Partial<VulnersError>;
+  errorCode?: number;
 }
 
 export interface VulnersRulesResponse {

@@ -22,23 +22,22 @@ export const COLORS = [
   '#ff0000',
 ];
 
-export const EXPLOIT_TYPES = ['exploitdb', 'githubexploit', 'packetstorm'];
+export const EXPLOIT_TYPES = ['exploitdb', 'githubexploit', 'metasploit', 'packetstorm'];
 
-/** Extract the host from a URL. Returns null when the input isn't a web URL. */
+/** Extract the host (incl. port) from a URL. Returns null when it isn't an
+ *  http(s) URL. Uses the URL parser so localhost, IPs, and ports work too. */
 export function extractDomain(url: string): string | null {
-  const matched = url.match(DOMAIN_REGEX);
-  if (matched) {
-    return new URL(matched[0]).host;
+  try {
+    const { protocol, host } = new URL(url);
+    return protocol === 'http:' || protocol === 'https:' ? host || null : null;
+  } catch {
+    return null;
   }
-  // `punycode` is unavailable in MV3 service workers; return the raw matched
-  // host instead of decoding it (which used to throw and abort the scan).
-  const puny = url.match(PUNYCODE_DOMAIN_REGEX);
-  return puny ? puny[1] : null;
 }
 
 /** Highest of the CVSS score and the Vulners enchantment score. */
 export function getScore(source: VulnersSource): number {
-  const cvss = source.cvss?.score ?? 0;
+  const cvss = source.metrics?.cvss?.score ?? source.cvss?.score ?? 0;
   const enchantment = source.enchantments?.score?.value ?? 0;
   return Math.max(cvss, enchantment);
 }
@@ -62,6 +61,7 @@ export function normalizeVulnerabilities(items: VulnersSearchItem[]): Vulnerabil
   return items
     .map(({ _source: s }) => {
       const score = getScore(s);
+      const exploit = hasExploitReferences(s);
       return {
         id: s.id,
         type: s.type,
@@ -71,6 +71,7 @@ export function normalizeVulnerabilities(items: VulnersSearchItem[]): Vulnerabil
         // items with low/missing CVSS aren't shown as low severity.
         scoreColor: getScoreColor(score),
         description: s.description,
+        exploit,
       };
     })
     .sort((a, b) => b.score - a.score);
@@ -78,7 +79,15 @@ export function normalizeVulnerabilities(items: VulnersSearchItem[]): Vulnerabil
 
 /** Whether any vulnerability is an exploit. */
 export function hasExploit(vulnerabilities: Vulnerability[]): boolean {
-  return vulnerabilities.some((v) => EXPLOIT_TYPES.includes(v.type));
+  return vulnerabilities.some((v) => v.exploit || EXPLOIT_TYPES.includes(v.type));
+}
+
+function hasExploitReferences(source: VulnersSource): boolean {
+  return Boolean(
+    source.enchantments?.dependencies?.references?.some((reference) =>
+      reference.type ? EXPLOIT_TYPES.includes(reference.type) : false
+    )
+  );
 }
 
 /** Highest score across a list of vulnerabilities (0 when empty). */

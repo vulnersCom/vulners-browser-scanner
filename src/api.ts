@@ -9,16 +9,29 @@
  *   - typed responses so callers can degrade gracefully.
  */
 import type {
+  VulnersAuditResponse,
+  VulnersAuditResult,
   Rule,
   VulnersKeyValidationResponse,
   VulnersRulesResponse,
+  VulnersSearchItem,
   VulnersSoftwareResponse,
 } from './types';
 
 const UTM = 'utm_source=scanner&utm_medium=chromePlugin&utm_campaign=scan';
 const RULES_URL = `https://vulners.com/api/v3/burp/rules/?${UTM}`;
-const SCAN_URL = `https://vulners.com/api/v3/burp/software/?${UTM}`;
+const SCAN_URL = `https://vulners.com/api/v4/audit/software/?${UTM}`;
 const VALIDATE_URL = 'https://vulners.com/api/v3/apiKey/valid/';
+// NOTE: 'id' is NOT a requestable field (the v4 audit API 400s on it), but it
+// is always returned on each vulnerability anyway.
+const SOFTWARE_AUDIT_FIELDS = [
+  'title',
+  'type',
+  'webApplicability',
+  'description',
+  'enchantments',
+  'metrics',
+];
 
 const DEFAULT_RETRIES = 3;
 const BACKOFF_MS = [1000, 2000, 4000];
@@ -34,6 +47,13 @@ export interface ScanParams {
 interface CacheEntry {
   expires: number;
   value: VulnersSoftwareResponse;
+}
+
+interface AuditSoftware {
+  part?: string;
+  vendor?: string;
+  product: string;
+  version: string;
 }
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -92,24 +112,79 @@ export class VulnersClient {
       return cached.value;
     }
 
-    // The API key travels in the X-Api-Key header, not the request body.
-    const { apiKey, ...payload } = params;
-    const value = await this.fetchJson<VulnersSoftwareResponse>(SCAN_URL, {
-      method: 'POST',
-      mode: 'cors',
-      redirect: 'follow',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Api-Key': apiKey,
-      },
-      body: JSON.stringify(payload),
-    });
+    const value = this.normalizeSoftwareAuditResponse(
+      await this.fetchJson<VulnersAuditResponse>(SCAN_URL, {
+        method: 'POST',
+        mode: 'cors',
+        redirect: 'follow',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': params.apiKey,
+        },
+        body: JSON.stringify({
+          fields: SOFTWARE_AUDIT_FIELDS,
+          software: [this.toAuditSoftware(params)],
+        }),
+      })
+    );
 
     // Only cache successful lookups; let errors retry next time.
     if (value.result !== 'error') {
       this.cache.set(key, { expires: Date.now() + this.cacheTtlMs, value });
     }
     return value;
+  }
+
+  private toAuditSoftware(params: ScanParams): AuditSoftware {
+    const fallback = { product: params.software, version: params.version };
+
+    if (params.type === 'cpe') {
+      const parts = params.software.split(':');
+      if (parts.length >= 4) {
+        return {
+          part: parts[1].replace(/^\//, ''),
+          vendor: parts[2],
+          product: parts[3],
+          version: params.version,
+        };
+      }
+    }
+
+    if (params.type === 'cpe3') {
+      const parts = params.software.split(':');
+      if (parts.length >= 5) {
+        return {
+          part: parts[2],
+          vendor: parts[3],
+          product: parts[4],
+          version: params.version,
+        };
+      }
+    }
+
+    return fallback;
+  }
+
+  private normalizeSoftwareAuditResponse(response: VulnersAuditResponse): VulnersSoftwareResponse {
+    if (!Array.isArray(response.result)) {
+      return {
+        result: 'error',
+        data: { ...(response.data ?? {}), errorCode: response.errorCode ?? 0 },
+      };
+    }
+
+    const byId = new Map<string, VulnersSearchItem>();
+    for (const entry of response.result) {
+      for (const vulnerability of this.getAuditVulnerabilities(entry)) {
+        byId.set(vulnerability.id, { _source: vulnerability });
+      }
+    }
+
+    return { result: 'OK', data: { search: [...byId.values()] } };
+  }
+
+  private getAuditVulnerabilities(entry: VulnersAuditResult) {
+    return entry.vulnerabilities ?? [];
   }
 
   /** Validate a user-supplied API key. The key is sent in the X-Api-Key header

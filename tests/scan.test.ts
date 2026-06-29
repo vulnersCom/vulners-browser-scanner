@@ -34,6 +34,15 @@ describe('getScore', () => {
         type: 'cve',
         title: '',
         description: '',
+        metrics: { cvss: { score: 8 } },
+      })
+    ).toBe(8);
+    expect(
+      getScore({
+        id: 'a',
+        type: 'cve',
+        title: '',
+        description: '',
         cvss: { score: 3 },
         enchantments: { score: { value: 9 } },
       })
@@ -97,6 +106,28 @@ describe('normalizeVulnerabilities', () => {
     const ghExp = out.find((v) => v.id === 'GH-EXP')!;
     expect(ghExp.score).toBe(9.5);
     expect(ghExp.scoreColor).toBe(getScoreColor(9.5)); // not getScoreColor(1)
+  });
+
+  it('marks v4 exploit references as exploitable without changing the bulletin type', () => {
+    const out = normalizeVulnerabilities([
+      {
+        _source: {
+          id: 'CVE-EXPLOIT',
+          type: 'cve',
+          title: 'Exploit',
+          description: 'desc',
+          metrics: { cvss: { score: 8 } },
+          enchantments: {
+            dependencies: {
+              references: [{ type: 'githubexploit', idList: ['GH-1'] }],
+            },
+          },
+        },
+      },
+    ]);
+
+    expect(out[0].exploit).toBe(true);
+    expect(hasExploit(out)).toBe(true);
   });
 });
 

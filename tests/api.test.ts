@@ -34,7 +34,7 @@ describe('VulnersClient', () => {
   });
 
   it('caches software lookups within the TTL', async () => {
-    const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ data: { search: [] } }));
+    const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ result: [] }));
     global.fetch = fetchMock;
     const client = new VulnersClient();
     const params = { software: 'nginx', version: '1.0.0', type: 'software', apiKey: 'k' };
@@ -63,7 +63,7 @@ describe('VulnersClient', () => {
   });
 
   it('sends the API key in the X-Api-Key header, not the request body', async () => {
-    const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ data: { search: [] } }));
+    const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ result: [] }));
     global.fetch = fetchMock;
 
     await new VulnersClient().scanSoftware({
@@ -77,6 +77,103 @@ describe('VulnersClient', () => {
     expect((init.headers as Record<string, string>)['X-Api-Key']).toBe('secret-key');
     expect(init.body).not.toContain('secret-key');
     expect(init.body).not.toContain('apiKey');
+  });
+
+  it('uses the v4 software audit endpoint and payload for plain software', async () => {
+    const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ result: [] }));
+    global.fetch = fetchMock;
+
+    await new VulnersClient().scanSoftware({
+      software: 'nginx',
+      version: '1.24.0',
+      type: 'software',
+      apiKey: 'key',
+    });
+
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/v4/audit/software/');
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(body.software).toEqual([{ product: 'nginx', version: '1.24.0' }]);
+    expect(body.fields).toEqual(
+      expect.arrayContaining(['id', 'title', 'type', 'description', 'enchantments', 'metrics'])
+    );
+  });
+
+  it('maps cpe and cpe3 rule aliases into v4 audit software objects', async () => {
+    const fetchMock = jest.fn().mockResolvedValue(jsonResponse({ result: [] }));
+    global.fetch = fetchMock;
+    const client = new VulnersClient();
+
+    await client.scanSoftware({
+      software: 'cpe:/a:nginx:nginx',
+      version: '1.24.0',
+      type: 'cpe',
+      apiKey: 'key',
+    });
+    await client.scanSoftware({
+      software: 'cpe:2.3:a:ivanti:connect_secure:*:*',
+      version: '22.7',
+      type: 'cpe3',
+      apiKey: 'key',
+    });
+
+    const cpeBody = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    const cpe3Body = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+
+    expect(cpeBody.software).toEqual([
+      { part: 'a', vendor: 'nginx', product: 'nginx', version: '1.24.0' },
+    ]);
+    expect(cpe3Body.software).toEqual([
+      { part: 'a', vendor: 'ivanti', product: 'connect_secure', version: '22.7' },
+    ]);
+  });
+
+  it('normalizes v4 audit vulnerabilities into the existing search shape and dedupes ids', async () => {
+    const fetchMock = jest.fn().mockResolvedValue(
+      jsonResponse({
+        result: [
+          {
+            vulnerabilities: [
+              {
+                id: 'CVE-1',
+                type: 'cve',
+                title: 'first',
+                description: 'desc',
+                metrics: { cvss: { score: 7.5 } },
+              },
+            ],
+          },
+          {
+            vulnerabilities: [
+              {
+                id: 'CVE-1',
+                type: 'cve',
+                title: 'duplicate',
+                description: 'duplicate desc',
+                metrics: { cvss: { score: 8 } },
+              },
+              {
+                id: 'CVE-2',
+                type: 'cve',
+                title: 'second',
+                description: 'desc',
+                metrics: { cvss: { score: 4 } },
+              },
+            ],
+          },
+        ],
+      })
+    );
+    global.fetch = fetchMock;
+
+    const result = await new VulnersClient().scanSoftware({
+      software: 'nginx',
+      version: '1.24.0',
+      type: 'software',
+      apiKey: 'key',
+    });
+
+    expect(result.data.search?.map((item) => item._source.id)).toEqual(['CVE-1', 'CVE-2']);
+    expect(result.data.search?.[0]._source.title).toBe('duplicate');
   });
 
   it('retries with backoff then succeeds', async () => {
