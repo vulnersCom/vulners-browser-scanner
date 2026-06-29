@@ -9,7 +9,6 @@ import {
   ListItemText,
   ListSubheader,
   Switch,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -35,6 +34,22 @@ const useStyles = makeStyles()({
   },
   listIcon: {
     minWidth: 'initial',
+  },
+  helpIcon: {
+    marginLeft: 6,
+    verticalAlign: 'text-bottom',
+  },
+  labelWithIcon: {
+    display: 'inline-flex',
+    alignItems: 'center',
+  },
+  settingRow: {
+    gap: 8,
+  },
+  settingControl: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: 0,
   },
   switch: {
     marginRight: 8,
@@ -71,8 +86,9 @@ const Settings: FC<OwnProps> = ({ setApiKeyOpen }) => {
           </ListSubheader>
         }
       >
-        <ListItemButton onChange={setShowAllDomains}>
+        <ListItemButton onChange={setShowAllDomains} className={classes.settingRow}>
           <FormControlLabel
+            className={classes.settingControl}
             control={
               <Switch
                 className={classes.switch}
@@ -84,8 +100,9 @@ const Settings: FC<OwnProps> = ({ setApiKeyOpen }) => {
             label="Show All Domains"
           />
         </ListItemButton>
-        <ListItemButton onChange={setShowNotVulnerable}>
+        <ListItemButton onChange={setShowNotVulnerable} className={classes.settingRow}>
           <FormControlLabel
+            className={classes.settingControl}
             control={
               <Switch
                 className={classes.switch}
@@ -98,8 +115,9 @@ const Settings: FC<OwnProps> = ({ setApiKeyOpen }) => {
           />
         </ListItemButton>
         <Divider />
-        <ListItemButton onChange={setDoExtraScan}>
+        <ListItemButton onChange={setDoExtraScan} className={classes.settingRow}>
           <FormControlLabel
+            className={classes.settingControl}
             control={
               <Switch
                 className={classes.switch}
@@ -108,13 +126,18 @@ const Settings: FC<OwnProps> = ({ setApiKeyOpen }) => {
                 name="doExtraScan"
               />
             }
-            label="Do extra scan of resources"
+            label={
+              <span className={classes.labelWithIcon}>
+                Do extra scan of resources
+                <HelpOutlined
+                  className={classes.helpIcon}
+                  fontSize="small"
+                  color="action"
+                  titleAccess="Extra scan fetches static resources and checks them for vulnerable CDNs"
+                />
+              </span>
+            }
           />
-          <Tooltip title="extension will do second request to receive and parse content of static files (for example checking the vulnerable CDNs)">
-            <ListItemIcon className={classes.listIcon}>
-              <HelpOutlined />
-            </ListItemIcon>
-          </Tooltip>
         </ListItemButton>
         <Divider />
         <ListItemButton onClick={changeTheme}>

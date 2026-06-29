@@ -8,10 +8,11 @@ import Settings from './Settings';
 import { useSettingsStore } from '../stores/Settings';
 
 const useStyles = makeStyles()({
-  navbar: {
+  drawerPaper: {
+    width: 360,
+    maxWidth: 'calc(100vw - 40px)',
     display: 'flex',
     flexDirection: 'column',
-    maxWidth: '50%',
   },
 });
 
@@ -26,7 +27,12 @@ const Navbar: FC = () => {
   };
 
   return (
-    <Drawer anchor="right" open={open} onClose={closeSettings} className={classes.navbar}>
+    <Drawer
+      anchor="right"
+      open={open}
+      onClose={closeSettings}
+      classes={{ paper: classes.drawerPaper }}
+    >
       {apiKeyOpen ? (
         <ApiKeyForm onClose={() => setApiKeyOpen(false)} onSuccess={handleSuccess} />
       ) : (
