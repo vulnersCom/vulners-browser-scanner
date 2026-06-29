@@ -12,23 +12,32 @@ import {
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import { Close, Visibility, VisibilityOff } from '@mui/icons-material';
+import { MONO } from '../themes/tokens';
 import { useSettingsStore } from '../stores/Settings';
 
-const useStyles = makeStyles()((theme) => ({
-  subheader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    paddingRight: 4,
-    width: 320,
-  },
-  form: {
-    flex: 1,
-  },
-  link: {
-    textDecoration: 'none',
-    color: theme.palette.primary.main,
-  },
-}));
+const useStyles = makeStyles()((theme) => {
+  const { tokens } = theme;
+  return {
+    subheader: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingRight: 4,
+      width: 320,
+      fontSize: 16,
+      fontWeight: 600,
+      color: tokens.text,
+      background: tokens.bg,
+    },
+    form: {
+      flex: 1,
+    },
+    link: {
+      textDecoration: 'none',
+      color: tokens.accent,
+    },
+  };
+});
 
 interface OwnProps {
   onClose: () => void;
@@ -36,7 +45,8 @@ interface OwnProps {
 }
 
 const ApiKeyForm: FC<OwnProps> = ({ onClose, onSuccess }) => {
-  const { classes } = useStyles();
+  const { classes, theme } = useStyles();
+  const { tokens } = theme;
   const apiKey = useSettingsStore((s) => s.apiKey);
   const validateAPIKey = useSettingsStore((s) => s.validateAPIKey);
   const setApiKey = useSettingsStore((s) => s.setApiKey);
@@ -103,6 +113,18 @@ const ApiKeyForm: FC<OwnProps> = ({ onClose, onSuccess }) => {
           error={!!error}
           helperText={error}
           onChange={handleChange}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              background: tokens.surface2,
+              borderRadius: '10px',
+              fontFamily: MONO,
+              fontSize: 13,
+              color: tokens.text,
+              '& fieldset': { borderColor: tokens.line },
+              '&:hover fieldset': { borderColor: tokens.line },
+              '&.Mui-focused fieldset': { borderColor: tokens.accent },
+            },
+          }}
           slotProps={{
             input: {
               endAdornment: (
@@ -122,7 +144,21 @@ const ApiKeyForm: FC<OwnProps> = ({ onClose, onSuccess }) => {
         />
 
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button color="primary" onClick={handleSaveKey} disabled={saving}>
+          <Button
+            onClick={handleSaveKey}
+            disabled={saving}
+            sx={{
+              textTransform: 'none',
+              fontSize: 13.5,
+              fontWeight: 600,
+              borderRadius: '10px',
+              padding: '8px 18px',
+              background: tokens.surface2,
+              color: tokens.text,
+              border: `1px solid ${tokens.line}`,
+              '&:hover': { background: tokens.surface2, borderColor: tokens.accent },
+            }}
+          >
             {saving ? 'Checking…' : 'Save'}
           </Button>
         </Box>
