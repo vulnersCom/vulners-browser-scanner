@@ -12,7 +12,6 @@ chrome.runtime.sendMessage({ action: 'get_regexp' }, (rules: Rule[]) => {
     try {
       const match = html.match(new RegExp(rule.regex));
       if (match) {
-        console.warn('[VULNERS] Match', rule.alias, match[0], match[1]);
         matches.push({ url: document.location.host, rule, version: match[1] });
       }
     } catch (e) {
