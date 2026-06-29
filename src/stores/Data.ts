@@ -1,34 +1,31 @@
-import { action, observable, makeObservable } from 'mobx';
+import { create } from 'zustand';
 import { sendMessage } from '../Browser';
+import { useSettingsStore } from './Settings';
 import type { HostData, ScanStat, Settings, VulnerabilitiesResponse } from '../types';
-import type SettingsStore from './Settings';
 
-export default class DataStore {
-  url = '';
-  data: HostData[] = [];
-  stat: ScanStat = { vulnerable: 0, scanned: 0 };
-  settings: Partial<Settings> = {};
-  landingSeen = false;
-  loaded = false;
+export interface DataState {
+  url: string;
+  data: HostData[];
+  stat: ScanStat;
+  settings: Partial<Settings>;
+  landingSeen: boolean;
+  loaded: boolean;
 
-  settingsStore: SettingsStore;
+  loadData: () => void;
+  setLoading: () => void;
+  clearData: () => void;
+  setLandingSeen: () => void;
+}
 
-  constructor(settingsStore: SettingsStore) {
-    this.settingsStore = settingsStore;
-    makeObservable(this, {
-      url: observable,
-      data: observable,
-      stat: observable,
-      landingSeen: observable,
-      loaded: observable,
+export const useDataStore = create<DataState>((set) => ({
+  url: '',
+  data: [],
+  stat: { vulnerable: 0, scanned: 0 },
+  settings: {},
+  landingSeen: false,
+  loaded: false,
 
-      loadData: action,
-      clearData: action,
-      setLandingSeen: action,
-    });
-  }
-
-  loadData = (): void =>
+  loadData: () => {
     sendMessage<VulnerabilitiesResponse>({ action: 'show_vulnerabilities' }, (data) => {
       // Never log settings — they contain the user-supplied API key (secret).
       console.log('[VULNERS]', {
@@ -37,22 +34,27 @@ export default class DataStore {
         stat: data.stat,
         url: data.url,
       });
-      Object.assign(this, data);
-      this.settingsStore.updateSettings(data.settings);
-      this.loaded = true;
+      set({
+        url: data.url,
+        data: data.data,
+        stat: data.stat,
+        settings: data.settings,
+        landingSeen: data.landingSeen,
+        loaded: true,
+      });
+      useSettingsStore.getState().updateSettings(data.settings);
     });
+  },
 
-  setLoading = (): boolean => (this.loaded = false);
+  setLoading: () => set({ loaded: false }),
 
-  clearData = (): void => {
+  clearData: () => {
     sendMessage({ action: 'clear_data' });
-    this.url = '';
-    this.data = [];
-    this.stat = { vulnerable: 0, scanned: 0 };
-  };
+    set({ url: '', data: [], stat: { vulnerable: 0, scanned: 0 } });
+  },
 
-  setLandingSeen = (): void => {
-    this.landingSeen = true;
+  setLandingSeen: () => {
+    set({ landingSeen: true });
     sendMessage({ action: 'landing_seen' });
-  };
-}
+  },
+}));

@@ -3,7 +3,6 @@ import type { FC, ReactNode } from 'react';
 import { MemoryRouter, Routes, Route, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { CircularProgress } from '@mui/material';
-import { inject, observer } from 'mobx-react';
 
 import Layout from './components/Layout';
 import Main from './pages/main/Main';
@@ -12,33 +11,34 @@ import About from './pages/About';
 import ThemeLight from './themes/Light';
 import ThemeDark from './themes/Dark';
 import { v_browser } from './Browser';
-import type { Stores } from './stores/types';
+import { useDataStore } from './stores/Data';
+import { useSettingsStore } from './stores/Settings';
 
-const AppLayout = inject(
-  'settingsStore',
-  'dataStore'
-)(
-  observer(({ settingsStore, dataStore, children }: Stores & { children?: ReactNode }) => {
-    const navigate = useNavigate();
-    const location = useLocation();
+const AppLayout: FC<{ children?: ReactNode }> = ({ children }) => {
+  const apiKey = useSettingsStore((s) => s.apiKey);
+  const loaded = useDataStore((s) => s.loaded);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    useEffect(() => {
-      if (settingsStore.apiKey) navigate('/');
-    }, [settingsStore.apiKey, navigate]);
+  useEffect(() => {
+    if (apiKey) navigate('/');
+  }, [apiKey, navigate]);
 
-    useEffect(() => {
-      if (settingsStore.apiKey) {
-        if (location.pathname === '/main') navigate('/');
-      } else {
-        if (location.pathname === '/') navigate('/main');
-      }
-    }, [dataStore.loaded, settingsStore.apiKey, location.pathname, navigate]);
+  useEffect(() => {
+    if (apiKey) {
+      if (location.pathname === '/main') navigate('/');
+    } else {
+      if (location.pathname === '/') navigate('/main');
+    }
+  }, [loaded, apiKey, location.pathname, navigate]);
 
-    return <>{children}</>;
-  })
-) as unknown as FC<{ children?: ReactNode }>;
+  return <>{children}</>;
+};
 
-const App: FC<Stores> = ({ settingsStore, dataStore }) => {
+const App: FC = () => {
+  const theme = useSettingsStore((s) => s.theme);
+  const loaded = useDataStore((s) => s.loaded);
+  const loadData = useDataStore((s) => s.loadData);
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
       const target = event.target instanceof Element ? event.target.closest('a') : null;
@@ -57,21 +57,21 @@ const App: FC<Stores> = ({ settingsStore, dataStore }) => {
   }, []);
 
   useEffect(() => {
-    dataStore.loadData();
-  }, [dataStore]);
+    loadData();
+  }, [loadData]);
 
-  const theme = settingsStore.theme === 'light' ? ThemeLight : ThemeDark;
+  const muiTheme = theme === 'light' ? ThemeLight : ThemeDark;
 
-  if (!dataStore.loaded) {
+  if (!loaded) {
     return (
-      <ThemeProvider theme={theme}>
+      <ThemeProvider theme={muiTheme}>
         <CircularProgress size={64} />
       </ThemeProvider>
     );
   }
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={muiTheme}>
       <MemoryRouter>
         <AppLayout>
           <Routes>
@@ -93,4 +93,4 @@ const App: FC<Stores> = ({ settingsStore, dataStore }) => {
   );
 };
 
-export default inject('settingsStore', 'dataStore')(observer(App)) as unknown as FC;
+export default App;

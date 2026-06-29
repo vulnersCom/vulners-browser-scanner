@@ -12,8 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { ExpandMore } from '@mui/icons-material';
-import { inject, observer } from 'mobx-react';
-import type { Stores } from '../../stores/types';
+import { useSettingsStore } from '../../stores/Settings';
 
 const SERVER_URL = 'https://vulners.com';
 
@@ -22,10 +21,11 @@ interface OwnProps {
   onNextClick: () => void;
 }
 
-type Props = OwnProps & Pick<Stores, 'settingsStore'>;
-
-const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
-  const [apiKey, setApiKey] = useState(settingsStore.apiKey);
+const StepAPIKey: FC<OwnProps> = ({ classes, onNextClick }) => {
+  const storeApiKey = useSettingsStore((s) => s.apiKey);
+  const validateAPIKey = useSettingsStore((s) => s.validateAPIKey);
+  const setStoreApiKey = useSettingsStore((s) => s.setApiKey);
+  const [apiKey, setApiKey] = useState(storeApiKey);
   const [apiKeyError, setApiKeyError] = useState('');
   const [fieldOpen, setFieldOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -42,10 +42,10 @@ const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
     }
 
     setSaving(true);
-    settingsStore.validateAPIKey(key, (response) => {
+    validateAPIKey(key, (response) => {
       setSaving(false);
       if (response.valid) {
-        settingsStore.setApiKey(key);
+        setStoreApiKey(key);
         onNextClick();
       } else {
         setApiKeyError('API Key is not valid');
@@ -133,4 +133,4 @@ const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
   );
 };
 
-export default inject('settingsStore')(observer(StepAPIKey)) as unknown as FC<OwnProps>;
+export default StepAPIKey;

@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import type { FC } from 'react';
-import { inject, observer } from 'mobx-react';
 import { Box, Button, Grow, Link, MobileStepper, Typography } from '@mui/material';
 import { ArrowForward } from '@mui/icons-material';
 import { makeStyles } from 'tss-react/mui';
 import Logo from '../../img/logo.svg';
 import StepSettings from './StepSettings';
 import StepAPIKey from './StepAPIKey';
-import type { Stores } from '../../stores/types';
+import { useSettingsStore } from '../../stores/Settings';
 
 const useStyles = makeStyles()((theme) => ({
   main: {
@@ -85,16 +84,18 @@ const StepWelcome: FC<{ classes: Classes; onNextClick: () => void }> = ({
   </Box>
 );
 
-const Main: FC<Pick<Stores, 'settingsStore'>> = ({ settingsStore }) => {
+const Main: FC = () => {
   const { classes } = useStyles();
-  const [activeStep, setActiveStep] = useState(settingsStore.introStep);
+  const introStep = useSettingsStore((s) => s.introStep);
+  const setIntroStep = useSettingsStore((s) => s.setIntroStep);
+  const [activeStep, setActiveStep] = useState(introStep);
 
   const onNextClick = () => {
-    settingsStore.setIntroStep(activeStep + 1);
+    setIntroStep(activeStep + 1);
     setActiveStep(activeStep + 1);
   };
   const onPrevClick = () => {
-    settingsStore.setIntroStep(activeStep - 1);
+    setIntroStep(activeStep - 1);
     setActiveStep(activeStep - 1);
   };
 
@@ -145,4 +146,4 @@ const Main: FC<Pick<Stores, 'settingsStore'>> = ({ settingsStore }) => {
   );
 };
 
-export default inject('settingsStore')(observer(Main)) as unknown as FC;
+export default Main;

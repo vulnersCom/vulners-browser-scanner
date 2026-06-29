@@ -10,18 +10,18 @@ import {
   Typography,
 } from '@mui/material';
 import { HelpOutlined } from '@mui/icons-material';
-import { inject, observer } from 'mobx-react';
-import type { Stores } from '../../stores/types';
+import { useSettingsStore, THEMES } from '../../stores/Settings';
 
 interface OwnProps {
   classes: Record<string, string>;
   onNextClick?: () => void;
 }
 
-type Props = OwnProps & Pick<Stores, 'settingsStore'>;
-
-const StepSettings: FC<Props> = ({ classes, settingsStore }) => {
-  const { theme, THEMES } = settingsStore;
+const StepSettings: FC<OwnProps> = ({ classes }) => {
+  const theme = useSettingsStore((s) => s.theme);
+  const doExtraScan = useSettingsStore((s) => s.doExtraScan);
+  const setDoExtraScan = useSettingsStore((s) => s.setDoExtraScan);
+  const changeTheme = useSettingsStore((s) => s.changeTheme);
 
   return (
     <Box
@@ -44,8 +44,8 @@ const StepSettings: FC<Props> = ({ classes, settingsStore }) => {
               control={
                 <Switch
                   color="primary"
-                  checked={settingsStore.doExtraScan}
-                  onChange={settingsStore.setDoExtraScan}
+                  checked={doExtraScan}
+                  onChange={setDoExtraScan}
                   name="doExtraScan"
                 />
               }
@@ -63,7 +63,7 @@ const StepSettings: FC<Props> = ({ classes, settingsStore }) => {
                 <Switch
                   color="primary"
                   checked={theme === THEMES.DARK}
-                  onChange={settingsStore.changeTheme}
+                  onChange={changeTheme}
                   name="changeTheme"
                 />
               }
@@ -76,4 +76,4 @@ const StepSettings: FC<Props> = ({ classes, settingsStore }) => {
   );
 };
 
-export default inject('settingsStore')(observer(StepSettings)) as unknown as FC<OwnProps>;
+export default StepSettings;

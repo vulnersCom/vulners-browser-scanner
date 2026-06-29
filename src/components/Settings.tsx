@@ -20,9 +20,9 @@ import {
   HelpOutlined,
   VpnKey,
 } from '@mui/icons-material';
-import { inject, observer } from 'mobx-react';
 import { makeStyles } from 'tss-react/mui';
-import type { Stores } from '../stores/types';
+import { useDataStore } from '../stores/Data';
+import { useSettingsStore, THEMES } from '../stores/Settings';
 
 const useStyles = makeStyles()({
   subheader: {
@@ -45,10 +45,19 @@ interface OwnProps {
   setApiKeyOpen: (open: boolean) => void;
 }
 
-type Props = OwnProps & Stores;
-
-const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
+const Settings: FC<OwnProps> = ({ setApiKeyOpen }) => {
   const { classes } = useStyles();
+
+  const showAllDomains = useSettingsStore((s) => s.showAllDomains);
+  const showOnlyVulnerable = useSettingsStore((s) => s.showOnlyVulnerable);
+  const doExtraScan = useSettingsStore((s) => s.doExtraScan);
+  const theme = useSettingsStore((s) => s.theme);
+  const closeSettings = useSettingsStore((s) => s.closeSettings);
+  const setShowAllDomains = useSettingsStore((s) => s.setShowAllDomains);
+  const setShowNotVulnerable = useSettingsStore((s) => s.setShowNotVulnerable);
+  const setDoExtraScan = useSettingsStore((s) => s.setDoExtraScan);
+  const changeTheme = useSettingsStore((s) => s.changeTheme);
+  const clearData = useDataStore((s) => s.clearData);
 
   return (
     <>
@@ -56,32 +65,32 @@ const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
         subheader={
           <ListSubheader component="div" className={classes.subheader}>
             <div>Settings</div>
-            <IconButton onClick={settingsStore.closeSettings}>
+            <IconButton onClick={closeSettings}>
               <Close />
             </IconButton>
           </ListSubheader>
         }
       >
-        <ListItemButton onChange={settingsStore.setShowAllDomains}>
+        <ListItemButton onChange={setShowAllDomains}>
           <FormControlLabel
             control={
               <Switch
                 className={classes.switch}
                 color="primary"
-                checked={settingsStore.showAllDomains}
+                checked={showAllDomains}
                 name="showAllDomains"
               />
             }
             label="Show All Domains"
           />
         </ListItemButton>
-        <ListItemButton onChange={settingsStore.setShowNotVulnerable}>
+        <ListItemButton onChange={setShowNotVulnerable}>
           <FormControlLabel
             control={
               <Switch
                 className={classes.switch}
                 color="primary"
-                checked={settingsStore.showOnlyVulnerable}
+                checked={showOnlyVulnerable}
                 name="showOnlyVulnerable"
               />
             }
@@ -89,13 +98,13 @@ const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
           />
         </ListItemButton>
         <Divider />
-        <ListItemButton onChange={settingsStore.setDoExtraScan}>
+        <ListItemButton onChange={setDoExtraScan}>
           <FormControlLabel
             control={
               <Switch
                 className={classes.switch}
                 color="primary"
-                checked={settingsStore.doExtraScan}
+                checked={doExtraScan}
                 name="doExtraScan"
               />
             }
@@ -108,10 +117,8 @@ const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
           </Tooltip>
         </ListItemButton>
         <Divider />
-        <ListItemButton onClick={settingsStore.changeTheme}>
-          <ListItemIcon>
-            {settingsStore.theme === settingsStore.THEMES.DARK ? <Brightness5 /> : <Brightness4 />}
-          </ListItemIcon>
+        <ListItemButton onClick={changeTheme}>
+          <ListItemIcon>{theme === THEMES.DARK ? <Brightness5 /> : <Brightness4 />}</ListItemIcon>
           <ListItemText primary="Dark Theme" />
         </ListItemButton>
       </List>
@@ -132,8 +139,8 @@ const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
       <List>
         <ListItemButton
           onClick={() => {
-            settingsStore.closeSettings();
-            dataStore.clearData();
+            closeSettings();
+            clearData();
           }}
         >
           <ListItemIcon>
@@ -148,4 +155,4 @@ const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
   );
 };
 
-export default inject('dataStore', 'settingsStore')(observer(Settings)) as unknown as FC<OwnProps>;
+export default Settings;

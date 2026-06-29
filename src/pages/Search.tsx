@@ -3,12 +3,12 @@ import type { FC } from 'react';
 import Domain from './search/Domain';
 import NotVulnerable from './search/placeholder/NotVulnerable';
 import NotFound from './search/placeholder/NotFound';
-import { inject, observer } from 'mobx-react';
 import { Box, IconButton, TextField } from '@mui/material';
 import { SearchOutlined } from '@mui/icons-material';
 import { makeStyles } from 'tss-react/mui';
 import type { HostData } from '../types';
-import type { Stores } from '../stores/types';
+import { useDataStore } from '../stores/Data';
+import { useSettingsStore } from '../stores/Settings';
 import { matchesHostSearch } from '../search';
 
 const useStyles = makeStyles()({
@@ -29,30 +29,34 @@ const useStyles = makeStyles()({
   },
 });
 
-const Search: FC<Stores> = ({ dataStore, settingsStore }) => {
+const Search: FC = () => {
   const { classes } = useStyles();
   const [searchValue, setSearchValue] = useState('');
+
+  const url = useDataStore((s) => s.url);
+  const data = useDataStore((s) => s.data);
+  const showOnlyVulnerable = useSettingsStore((s) => s.showOnlyVulnerable);
+  const showAllDomains = useSettingsStore((s) => s.showAllDomains);
 
   // Reset the search box whenever the domain filters change. Following React's
   // "adjusting state when a prop changes" guidance, this is done during render
   // instead of in an effect to avoid a synchronous setState in an effect.
-  const filterKey = `${settingsStore.showOnlyVulnerable}-${settingsStore.showAllDomains}`;
+  const filterKey = `${showOnlyVulnerable}-${showAllDomains}`;
   const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
   if (filterKey !== prevFilterKey) {
     setPrevFilterKey(filterKey);
     setSearchValue('');
   }
 
-  const { url } = dataStore;
-  const domainSoft = url ? dataStore.data.find((domain) => domain.name === url) : undefined;
+  const domainSoft = url ? data.find((domain) => domain.name === url) : undefined;
 
-  let list: HostData[] = [...dataStore.data];
+  let list: HostData[] = [...data];
 
-  if (!settingsStore.showAllDomains && url) {
+  if (!showAllDomains && url) {
     list = domainSoft ? [domainSoft] : [];
   }
 
-  if (settingsStore.showOnlyVulnerable) {
+  if (showOnlyVulnerable) {
     list = list.filter((domain) => domain.vulnerable);
   }
 
@@ -66,7 +70,7 @@ const Search: FC<Stores> = ({ dataStore, settingsStore }) => {
 
   return (
     <div className={classes.root}>
-      {settingsStore.showAllDomains && (
+      {showAllDomains && (
         <Box sx={{ display: 'flex', pr: 2, alignItems: 'center' }}>
           <IconButton>
             <SearchOutlined />
@@ -93,4 +97,4 @@ const Search: FC<Stores> = ({ dataStore, settingsStore }) => {
   );
 };
 
-export default inject('dataStore', 'settingsStore')(observer(Search)) as unknown as FC;
+export default Search;

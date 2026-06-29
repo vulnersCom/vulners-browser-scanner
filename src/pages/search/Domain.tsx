@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { inject, observer } from 'mobx-react';
 
 import Software from './Software';
 import HiddenSoft from './placeholder/HiddenSoft';
@@ -7,7 +6,7 @@ import { Box, List, Paper, Typography } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
 import type { FC } from 'react';
 import type { SoftwareEntry } from '../../types';
-import type { Stores } from '../../stores/types';
+import { useSettingsStore } from '../../stores/Settings';
 
 const useStyles = makeStyles()({
   header: {
@@ -22,12 +21,11 @@ interface OwnProps {
   vulnerable?: boolean;
 }
 
-type Props = OwnProps & Pick<Stores, 'settingsStore'>;
-
-const Domain: FC<Props> = ({ settingsStore, name = '', software = {} }) => {
+const Domain: FC<OwnProps> = ({ name = '', software = {} }) => {
   const { classes } = useStyles();
 
-  const [showOnlyVulnerable, setShowOnlyVulnerable] = useState(settingsStore.showOnlyVulnerable);
+  const storeShowOnlyVulnerable = useSettingsStore((s) => s.showOnlyVulnerable);
+  const [showOnlyVulnerable, setShowOnlyVulnerable] = useState(storeShowOnlyVulnerable);
 
   let softToShow: SoftwareEntry[] = [];
   const softToHide: SoftwareEntry[] = [];
@@ -69,4 +67,4 @@ const Domain: FC<Props> = ({ settingsStore, name = '', software = {} }) => {
   );
 };
 
-export default inject('settingsStore')(observer(Domain)) as unknown as FC<OwnProps>;
+export default Domain;

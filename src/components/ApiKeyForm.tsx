@@ -11,9 +11,8 @@ import {
   Typography,
 } from '@mui/material';
 import { makeStyles } from 'tss-react/mui';
-import { inject, observer } from 'mobx-react';
 import { Close, Visibility, VisibilityOff } from '@mui/icons-material';
-import type { Stores } from '../stores/types';
+import { useSettingsStore } from '../stores/Settings';
 
 const useStyles = makeStyles()((theme) => ({
   subheader: {
@@ -36,26 +35,27 @@ interface OwnProps {
   onSuccess: () => void;
 }
 
-type Props = OwnProps & Pick<Stores, 'settingsStore'>;
-
-const ApiKeyForm: FC<Props> = ({ settingsStore, onClose, onSuccess }) => {
+const ApiKeyForm: FC<OwnProps> = ({ onClose, onSuccess }) => {
   const { classes } = useStyles();
-  const [value, setValue] = useState(settingsStore.apiKey);
+  const apiKey = useSettingsStore((s) => s.apiKey);
+  const validateAPIKey = useSettingsStore((s) => s.validateAPIKey);
+  const setApiKey = useSettingsStore((s) => s.setApiKey);
+  const [value, setValue] = useState(apiKey);
   const [visible, setVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const handleSaveKey = () => {
-    const apiKey = value.trim();
-    if (!apiKey) {
+    const key = value.trim();
+    if (!key) {
       return setError('API Key can not be empty');
     }
 
     setSaving(true);
-    settingsStore.validateAPIKey(apiKey, (response) => {
+    validateAPIKey(key, (response) => {
       setSaving(false);
       if (response.valid) {
-        settingsStore.setApiKey(apiKey);
+        setApiKey(key);
         onSuccess();
       } else {
         setError('API Key is not valid');
@@ -131,4 +131,4 @@ const ApiKeyForm: FC<Props> = ({ settingsStore, onClose, onSuccess }) => {
   );
 };
 
-export default inject('settingsStore')(observer(ApiKeyForm)) as unknown as FC<OwnProps>;
+export default ApiKeyForm;

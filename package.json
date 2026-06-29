@@ -25,12 +25,11 @@
     "@emotion/styled": "^11.13.0",
     "@mui/icons-material": "^9.1.1",
     "@mui/material": "^9.1.2",
-    "mobx": "^6.3.2",
-    "mobx-react": "^9.2.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
-    "tss-react": "^4.9.21"
+    "tss-react": "^4.9.21",
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import type { FC } from 'react';
 import { Drawer } from '@mui/material';
-import { inject, observer } from 'mobx-react';
 import { makeStyles } from 'tss-react/mui';
 import Footer from './Footer';
 import ApiKeyForm from './ApiKeyForm';
 import Settings from './Settings';
-import type { Stores } from '../stores/types';
+import { useSettingsStore } from '../stores/Settings';
 
 const useStyles = makeStyles()({
   navbar: {
@@ -16,21 +15,18 @@ const useStyles = makeStyles()({
   },
 });
 
-const Navbar: FC<Pick<Stores, 'settingsStore'>> = ({ settingsStore }) => {
+const Navbar: FC = () => {
   const { classes } = useStyles();
   const [apiKeyOpen, setApiKeyOpen] = useState(false);
+  const open = useSettingsStore((s) => s.open);
+  const closeSettings = useSettingsStore((s) => s.closeSettings);
 
   const handleSuccess = () => {
-    settingsStore.closeSettings();
+    closeSettings();
   };
 
   return (
-    <Drawer
-      anchor="right"
-      open={settingsStore.open}
-      onClose={settingsStore.closeSettings}
-      className={classes.navbar}
-    >
+    <Drawer anchor="right" open={open} onClose={closeSettings} className={classes.navbar}>
       {apiKeyOpen ? (
         <ApiKeyForm onClose={() => setApiKeyOpen(false)} onSuccess={handleSuccess} />
       ) : (
@@ -42,4 +38,4 @@ const Navbar: FC<Pick<Stores, 'settingsStore'>> = ({ settingsStore }) => {
   );
 };
 
-export default inject('settingsStore')(observer(Navbar)) as unknown as FC;
+export default Navbar;

@@ -1,11 +1,11 @@
 import type { FC } from 'react';
 import { makeStyles } from 'tss-react/mui';
-import { inject, observer } from 'mobx-react';
 import { ArrowBack, Settings as SettingsIcon } from '@mui/icons-material';
 import { Box, IconButton, Link, Tooltip, Typography } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Icon from '../img/icon.svg';
-import type { Stores } from '../stores/types';
+import { useDataStore } from '../stores/Data';
+import { useSettingsStore } from '../stores/Settings';
 
 const useStyles = makeStyles()((theme) => ({
   header: {
@@ -18,11 +18,13 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const Header: FC<Stores> = ({ dataStore, settingsStore }) => {
+const Header: FC = () => {
   const { classes } = useStyles();
 
-  const { stat } = dataStore;
-  const { open } = settingsStore;
+  const stat = useDataStore((s) => s.stat);
+  const open = useSettingsStore((s) => s.open);
+  const openSettings = useSettingsStore((s) => s.openSettings);
+  const closeSettings = useSettingsStore((s) => s.closeSettings);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -69,14 +71,11 @@ const Header: FC<Stores> = ({ dataStore, settingsStore }) => {
           </Tooltip>
         </Box>
       </Box>
-      <IconButton
-        color="secondary"
-        onClick={() => (!open ? settingsStore.openSettings() : settingsStore.closeSettings())}
-      >
+      <IconButton color="secondary" onClick={() => (!open ? openSettings() : closeSettings())}>
         <SettingsIcon />
       </IconButton>
     </Box>
   );
 };
 
-export default inject('dataStore', 'settingsStore')(observer(Header)) as unknown as FC;
+export default Header;
