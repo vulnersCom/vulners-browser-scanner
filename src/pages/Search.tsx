@@ -9,6 +9,7 @@ import { SearchOutlined } from '@mui/icons-material';
 import { makeStyles } from 'tss-react/mui';
 import type { HostData } from '../types';
 import type { Stores } from '../stores/types';
+import { matchesHostSearch } from '../search';
 
 const useStyles = makeStyles()({
   root: {
@@ -60,8 +61,7 @@ const Search: FC<Stores> = ({ dataStore, settingsStore }) => {
   }
 
   if (searchValue) {
-    const re = new RegExp(searchValue, 'ig');
-    list = list.filter((d) => re.test(Object.keys(d.software).join() + d.name));
+    list = list.filter((domain) => matchesHostSearch(domain, searchValue));
   }
 
   return (
