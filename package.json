@@ -1,6 +1,6 @@
 {
   "name": "vulners-browser-scanner",
-  "version": "0.1.0",
+  "version": "3.0.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -10,6 +10,7 @@
     "dev": "node esbuild.config.ts --watch",
     "watch": "node esbuild.config.ts --watch",
     "build": "node esbuild.config.ts",
+    "build:debug": "node esbuild.config.ts --dev",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

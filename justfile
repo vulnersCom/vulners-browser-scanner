@@ -33,9 +33,29 @@ format:
 test:
     npm test
 
-# Production build -> ./build (loadable unpacked extension)
+# Production (minified) build -> ./build (loadable unpacked extension)
 build:
     npm run build
+
+# Debug build: unminified + inline sourcemaps -> ./build
+debug:
+    npm run build:debug
+
+# Alias for the debug build
+dev: debug
+
+# Production build, then zip ./build into a Chrome Web Store-ready archive
+# in dist/ named <package>-v<manifest version>.zip (manifest.json at the root).
+release: build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    name="$(node -p "require('./package.json').name")"
+    version="$(node -p "require('./build/manifest.json').version")"
+    mkdir -p dist
+    archive="dist/${name}-v${version}.zip"
+    rm -f "${archive}"
+    (cd build && zip -qr "../${archive}" ./*)
+    echo "✅ Chrome Web Store package -> ${archive}"
 
 # Alias: full build (esbuild already copies the static extension files)
 package: build

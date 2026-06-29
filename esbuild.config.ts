@@ -1,27 +1,38 @@
 import * as esbuild from 'esbuild';
 import { sassPlugin } from 'esbuild-sass-plugin';
-import { cpSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 
 /**
  * Single esbuild pipeline replacing CRA (`react-scripts`) + the standalone
  * webpack watch. Bundles the React popup (with SCSS + SVG) and copies the
  * static Manifest v3 artifacts so `build/` loads as an unpacked extension.
  *
- * Run: `node esbuild.config.ts [--watch]` (Node 22.6+ strips the types).
+ * Run: `node esbuild.config.ts [--watch] [--dev]` (Node 22.6+ strips the types).
+ *   (default)  production: minified, no sourcemap
+ *   --dev      debug: unminified + inline sourcemap (one-shot)
+ *   --watch    debug + rebuild on change
  */
 const OUTDIR = 'build';
 const watch = process.argv.includes('--watch');
+const dev = watch || process.argv.includes('--dev');
 
-/** Static extension files copied verbatim. The worker and content script are
- *  now bundled from TypeScript (see entryPoints below). */
-const STATIC_FILES = ['index.html', 'manifest.json'];
+/** package.json is the single source of truth for the version. */
+const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
 
 function copyStatic(): void {
   mkdirSync(OUTDIR, { recursive: true });
-  for (const file of STATIC_FILES) {
-    cpSync(`public/${file}`, `${OUTDIR}/${file}`);
-  }
+  cpSync('public/index.html', `${OUTDIR}/index.html`);
   cpSync('public/img', `${OUTDIR}/img`, { recursive: true });
+
+  // Stamp the package.json version into the shipped manifest so there is one
+  // version to bump (`npm version ...`); public/manifest.json's version is a
+  // placeholder that the build overwrites.
+  const manifest = JSON.parse(readFileSync('public/manifest.json', 'utf8')) as Record<
+    string,
+    unknown
+  >;
+  manifest.version = pkg.version;
+  writeFileSync(`${OUTDIR}/manifest.json`, JSON.stringify(manifest, null, 2) + '\n');
 }
 
 const buildOptions: esbuild.BuildOptions = {
@@ -44,10 +55,10 @@ const buildOptions: esbuild.BuildOptions = {
     '.jpg': 'dataurl',
   },
   define: {
-    'process.env.NODE_ENV': JSON.stringify(watch ? 'development' : 'production'),
+    'process.env.NODE_ENV': JSON.stringify(dev ? 'development' : 'production'),
   },
-  sourcemap: watch ? 'inline' : false,
-  minify: !watch,
+  sourcemap: dev ? 'inline' : false,
+  minify: !dev,
   plugins: [sassPlugin({ type: 'css' })],
   logLevel: 'info',
 };
@@ -61,5 +72,5 @@ if (watch) {
   console.log('[esbuild] watching for changes…');
 } else {
   await esbuild.build(buildOptions);
-  console.log(`[esbuild] build complete -> ${OUTDIR}/`);
+  console.log(`[esbuild] ${dev ? 'debug' : 'release'} build complete -> ${OUTDIR}/`);
 }
