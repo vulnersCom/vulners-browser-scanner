@@ -1,4 +1,4 @@
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import './scss/index.scss';
 import { Provider } from 'mobx-react';
@@ -14,10 +14,12 @@ const stores = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  ReactDOM.render(
-    <Provider {...stores}>
-      <App />
-    </Provider>,
-    document.getElementById('body')
-  );
+  const container = document.getElementById('body');
+  if (container) {
+    createRoot(container).render(
+      <Provider {...stores}>
+        <App />
+      </Provider>
+    );
+  }
 });

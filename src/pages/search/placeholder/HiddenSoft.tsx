@@ -24,7 +24,7 @@ const HiddenSoft: FC<Props> = ({ soft, onClick }) => {
   }
 
   return (
-    <Box justifyContent="flex-end" pr={1} pb={1}>
+    <Box sx={{ justifyContent: 'flex-end', pr: 1, pb: 1 }}>
       <Typography variant="subtitle2" color="textSecondary" align="right">
         <Link href="#" onClick={onClick} className={classes.hidden}>
           {soft.length} fingerprint{soft.length > 1 && 's'}&nbsp;hidden

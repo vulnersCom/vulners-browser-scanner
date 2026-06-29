@@ -3,7 +3,7 @@ import { makeStyles } from 'tss-react/mui';
 import { inject, observer } from 'mobx-react';
 import { ArrowBack, Settings as SettingsIcon } from '@mui/icons-material';
 import { Box, IconButton, Link, Tooltip, Typography } from '@mui/material';
-import { useHistory } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Icon from '../img/icon.svg';
 import type { Stores } from '../stores/types';
 
@@ -23,20 +23,23 @@ const Header: FC<Stores> = ({ dataStore, settingsStore }) => {
 
   const { stat } = dataStore;
   const { open } = settingsStore;
-  const history = useHistory();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <Box
-      display="flex"
-      alignItems="center"
-      justifyContent="space-between"
       className={classes.header}
-      pr={1}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        pr: 1,
+      }}
     >
-      <Box display="flex" alignItems="center">
-        <Box p={1}>
-          {history.location.pathname === '/about' ? (
-            <IconButton onClick={() => history.push('/')}>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ p: 1 }}>
+          {location.pathname === '/about' ? (
+            <IconButton onClick={() => navigate('/')}>
               <ArrowBack />
             </IconButton>
           ) : (
@@ -45,7 +48,7 @@ const Header: FC<Stores> = ({ dataStore, settingsStore }) => {
             </Link>
           )}
         </Box>
-        <Box ml={2}>
+        <Box sx={{ ml: 2 }}>
           <Tooltip title="Number of websites where vulnerabilities were found">
             <span>
               <span>Vulnerable&nbsp;&nbsp;</span>
@@ -55,7 +58,7 @@ const Header: FC<Stores> = ({ dataStore, settingsStore }) => {
             </span>
           </Tooltip>
         </Box>
-        <Box ml={2}>
+        <Box sx={{ ml: 2 }}>
           <Tooltip title="Number of websites the extension has ever scanned">
             <span>
               <span>Scanned&nbsp;&nbsp;</span>

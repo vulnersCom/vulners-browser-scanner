@@ -9,7 +9,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { HelpOutline } from '@mui/icons-material';
+import { HelpOutlined } from '@mui/icons-material';
 import { inject, observer } from 'mobx-react';
 import type { Stores } from '../../stores/types';
 
@@ -25,16 +25,18 @@ const StepSettings: FC<Props> = ({ classes, settingsStore }) => {
 
   return (
     <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      flexDirection="column"
-      flex={1}
-      p={1}
-      m={1}
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column',
+        flex: 1,
+        p: 1,
+        m: 1,
+      }}
     >
       <Paper>
-        <Box p={2}>
+        <Box sx={{ p: 2 }}>
           <Typography variant="h5">Settings</Typography>
           <Typography variant="subtitle1">Select default behaviour and feeling of app</Typography>
           <ListItem>
@@ -51,7 +53,7 @@ const StepSettings: FC<Props> = ({ classes, settingsStore }) => {
             />
             <Tooltip title="Extension will do second request to receive and parse content of static files (for example checking the vulnerable CDNs)">
               <ListItemIcon className={classes.listIcon}>
-                <HelpOutline />
+                <HelpOutlined />
               </ListItemIcon>
             </Tooltip>
           </ListItem>

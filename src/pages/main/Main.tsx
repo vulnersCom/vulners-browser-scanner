@@ -44,14 +44,16 @@ const StepWelcome: FC<{ classes: Classes; onNextClick: () => void }> = ({
   onNextClick,
 }) => (
   <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    flexDirection="column"
-    flex={1}
-    p={5}
+    sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'column',
+      flex: 1,
+      p: 5,
+    }}
   >
-    <Box mb={3}>
+    <Box sx={{ mb: 3 }}>
       <Link href="https://vulners.com" target="_blank" rel="noopener noreferrer">
         <img src={Logo} className={classes.logo} alt="Vulners" />
       </Link>
@@ -62,7 +64,7 @@ const StepWelcome: FC<{ classes: Classes; onNextClick: () => void }> = ({
       Vulners web scanner!
     </Typography>
 
-    <Box p={3} mb={3}>
+    <Box sx={{ p: 3, mb: 3 }}>
       <Typography variant="body2">
         Extension provides ability to passively scan web-sites while you surf internet
       </Typography>
@@ -110,7 +112,7 @@ const Main: FC<Pick<Stores, 'settingsStore'>> = ({ settingsStore }) => {
   return (
     <Box className={classes.main}>
       <Grow in timeout={1000}>
-        <Box flex={1} display="flex" justifyContent="center" flexDirection="column">
+        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', flexDirection: 'column' }}>
           {getStepContent()}
 
           {activeStep !== 0 && (

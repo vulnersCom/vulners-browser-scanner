@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { Box, Link, Typography } from '@mui/material';
 
 const About: FC = () => (
-  <Box p={2}>
+  <Box sx={{ p: 2 }}>
     <Typography variant="h5">How It Works?</Typography>
     <br />
 

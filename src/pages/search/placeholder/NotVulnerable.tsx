@@ -48,11 +48,13 @@ const NotVulnerable: FC<Props> = ({ url, hiddenSoft }) => {
   const domain = url ? url.replace('www.', '') : url;
   return (
     <Box
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      flexDirection="column"
       className={classes.box}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+      }}
     >
       {icon}
       <br />

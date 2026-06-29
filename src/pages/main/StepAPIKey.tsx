@@ -4,7 +4,7 @@ import {
   Box,
   Button,
   Collapse,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   Paper,
@@ -55,21 +55,23 @@ const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
 
   return (
     <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      flexDirection="column"
-      flex={1}
-      p={1}
-      m={1}
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column',
+        flex: 1,
+        p: 1,
+        m: 1,
+      }}
     >
       <Paper>
-        <Box p={2}>
+        <Box sx={{ p: 2 }}>
           <Typography variant="h5">API Key</Typography>
           <Typography variant="subtitle1">
             Extension requires API Key to work properly Generate it by clicking button below
           </Typography>
-          <Box display="flex" justifyContent="center" mt={3}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
             <Button
               href={SERVER_URL + '/userinfo?tab=api-keys'}
               target="_blank"
@@ -83,14 +85,14 @@ const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
 
           <br />
 
-          <ListItem button onClick={() => setFieldOpen(!fieldOpen)}>
+          <ListItemButton onClick={() => setFieldOpen(!fieldOpen)}>
             <ListItemText>Or add key manually</ListItemText>
             <ListItemIcon>
               <ExpandMore
                 style={{ transition: 'all 0.5s', transform: fieldOpen ? 'rotate(0.5turn)' : '' }}
               />
             </ListItemIcon>
-          </ListItem>
+          </ListItemButton>
           <Collapse in={fieldOpen}>
             <Typography variant="body2" component="div">
               <ul>
@@ -118,7 +120,7 @@ const StepAPIKey: FC<Props> = ({ classes, onNextClick, settingsStore }) => {
               onChange={(e) => handleChangeKey(e.target.value)}
             />
 
-            <Box display="flex" justifyContent="center" mt={3}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
               <Button disabled={!apiKey || saving} color="primary" onClick={handleSaveKey}>
                 {saving ? 'Checking…' : 'Save'}
               </Button>

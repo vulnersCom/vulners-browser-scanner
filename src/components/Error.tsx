@@ -5,7 +5,7 @@ import type { Stores } from '../stores/types';
 
 const Error: FC<Pick<Stores, 'settingsStore'>> = ({ settingsStore }) =>
   settingsStore.error ? (
-    <Box p={2} style={{ background: '#f44336', color: '#fff' }}>
+    <Box style={{ background: '#f44336', color: '#fff' }} sx={{ p: 2 }}>
       <Typography variant="body2">{settingsStore.error}</Typography>
     </Box>
   ) : null;

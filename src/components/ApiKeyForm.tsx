@@ -80,7 +80,7 @@ const ApiKeyForm: FC<Props> = ({ settingsStore, onClose, onSuccess }) => {
         </ListSubheader>
       }
     >
-      <Box p={2} mt={1}>
+      <Box sx={{ p: 2, mt: 1 }}>
         <Typography variant="body1">
           Follow{' '}
           <a
@@ -94,7 +94,7 @@ const ApiKeyForm: FC<Props> = ({ settingsStore, onClose, onSuccess }) => {
           to create new api key
         </Typography>
       </Box>
-      <Box p={2} className={classes.form}>
+      <Box className={classes.form} sx={{ p: 2 }}>
         <TextField
           label="API Key"
           fullWidth
@@ -103,23 +103,25 @@ const ApiKeyForm: FC<Props> = ({ settingsStore, onClose, onSuccess }) => {
           error={!!error}
           helperText={error}
           onChange={handleChange}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label={visible ? 'Hide API key' : 'Show API key'}
-                  onClick={() => setVisible((prev) => !prev)}
-                  edge="end"
-                  size="small"
-                >
-                  {visible ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={visible ? 'Hide API key' : 'Show API key'}
+                    onClick={() => setVisible((prev) => !prev)}
+                    edge="end"
+                    size="small"
+                  >
+                    {visible ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
           }}
         />
 
-        <Box mt={2} display="flex" justifyContent="flex-end">
+        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
           <Button color="primary" onClick={handleSaveKey} disabled={saving}>
             {saving ? 'Checking…' : 'Save'}
           </Button>

@@ -158,7 +158,7 @@ function decorateBadge(tab: chrome.tabs.Tab): void {
  * Fingerprinting + lookup
  * ------------------------------------------------------------------ */
 
-function findFingerprintsInHeaders(response: chrome.webRequest.WebResponseCacheDetails): void {
+function findFingerprintsInHeaders(response: chrome.webRequest.OnCompletedDetails): void {
   const url = extractDomain(response.url);
   if (!url) return;
 

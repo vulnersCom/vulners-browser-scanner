@@ -45,8 +45,8 @@ const Domain: FC<Props> = ({ settingsStore, name = '', software = {} }) => {
   }
 
   return (
-    <Box key={name} pr={1} pl={1} mb={1}>
-      <Box pt={3} pb={1}>
+    <Box key={name} sx={{ pr: 1, pl: 1, mb: 1 }}>
+      <Box sx={{ pt: 3, pb: 1 }}>
         <Typography variant="h5" color="primary" align="center" className={classes.header}>
           {name}
         </Typography>

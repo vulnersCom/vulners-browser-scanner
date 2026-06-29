@@ -23,7 +23,7 @@ const Footer: FC = () => {
   const { classes } = useStyles();
 
   return (
-    <Box p={2} pt={1} pb={1} className={classes.footer}>
+    <Box className={classes.footer} sx={{ p: 2, pt: 1, pb: 1 }}>
       <Typography className="container" align="center">
         <Link
           className={classes.link}

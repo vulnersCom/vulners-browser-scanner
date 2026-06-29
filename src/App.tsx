@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { FC, ReactNode } from 'react';
-import { MemoryRouter, Switch, Route, useHistory } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { CircularProgress } from '@mui/material';
 import { inject, observer } from 'mobx-react';
@@ -19,19 +19,20 @@ const AppLayout = inject(
   'dataStore'
 )(
   observer(({ settingsStore, dataStore, children }: Stores & { children?: ReactNode }) => {
-    const history = useHistory();
+    const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
-      if (settingsStore.apiKey) history.push('/');
-    }, [settingsStore.apiKey, history]);
+      if (settingsStore.apiKey) navigate('/');
+    }, [settingsStore.apiKey, navigate]);
 
     useEffect(() => {
       if (settingsStore.apiKey) {
-        if (history.location.pathname === '/main') history.push('/');
+        if (location.pathname === '/main') navigate('/');
       } else {
-        if (history.location.pathname === '/') history.push('/main');
+        if (location.pathname === '/') navigate('/main');
       }
-    }, [dataStore.loaded, settingsStore.apiKey, history]);
+    }, [dataStore.loaded, settingsStore.apiKey, location.pathname, navigate]);
 
     return <>{children}</>;
   })
@@ -68,13 +69,19 @@ const App: FC<Stores> = ({ settingsStore, dataStore }) => {
     <ThemeProvider theme={theme}>
       <MemoryRouter>
         <AppLayout>
-          <Switch>
-            <Route exact path="/main" component={Main} />
-            <Layout>
-              <Route exact path="/" component={Search} />
-              <Route exact path="/about" component={About} />
-            </Layout>
-          </Switch>
+          <Routes>
+            <Route path="/main" element={<Main />} />
+            <Route
+              element={
+                <Layout>
+                  <Outlet />
+                </Layout>
+              }
+            >
+              <Route path="/" element={<Search />} />
+              <Route path="/about" element={<About />} />
+            </Route>
+          </Routes>
         </AppLayout>
       </MemoryRouter>
     </ThemeProvider>

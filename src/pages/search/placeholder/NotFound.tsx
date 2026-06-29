@@ -12,7 +12,10 @@ const NotFound: FC = () => {
   const { classes } = useStyles();
 
   return (
-    <Box display="flex" alignItems="center" justifyContent="center" style={{ height: '100%' }}>
+    <Box
+      style={{ height: '100%' }}
+      sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
       <Typography className={classes.text}>Nothing found</Typography>
     </Box>
   );

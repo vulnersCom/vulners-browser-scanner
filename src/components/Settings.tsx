@@ -4,7 +4,7 @@ import {
   FormControlLabel,
   IconButton,
   List,
-  ListItem,
+  ListItemButton,
   ListItemIcon,
   ListItemText,
   ListSubheader,
@@ -16,8 +16,8 @@ import {
   Brightness4,
   Brightness5,
   Close,
-  DeleteOutline,
-  HelpOutline,
+  DeleteOutlined,
+  HelpOutlined,
   VpnKey,
 } from '@mui/icons-material';
 import { inject, observer } from 'mobx-react';
@@ -62,7 +62,7 @@ const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
           </ListSubheader>
         }
       >
-        <ListItem button onChange={settingsStore.setShowAllDomains}>
+        <ListItemButton onChange={settingsStore.setShowAllDomains}>
           <FormControlLabel
             control={
               <Switch
@@ -74,8 +74,8 @@ const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
             }
             label="Show All Domains"
           />
-        </ListItem>
-        <ListItem button onChange={settingsStore.setShowNotVulnerable}>
+        </ListItemButton>
+        <ListItemButton onChange={settingsStore.setShowNotVulnerable}>
           <FormControlLabel
             control={
               <Switch
@@ -87,9 +87,9 @@ const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
             }
             label="Show only vulnerable hosts"
           />
-        </ListItem>
+        </ListItemButton>
         <Divider />
-        <ListItem button onChange={settingsStore.setDoExtraScan}>
+        <ListItemButton onChange={settingsStore.setDoExtraScan}>
           <FormControlLabel
             control={
               <Switch
@@ -103,47 +103,46 @@ const Settings: FC<Props> = ({ dataStore, settingsStore, setApiKeyOpen }) => {
           />
           <Tooltip title="extension will do second request to receive and parse content of static files (for example checking the vulnerable CDNs)">
             <ListItemIcon className={classes.listIcon}>
-              <HelpOutline />
+              <HelpOutlined />
             </ListItemIcon>
           </Tooltip>
-        </ListItem>
+        </ListItemButton>
         <Divider />
-        <ListItem button onClick={settingsStore.changeTheme}>
+        <ListItemButton onClick={settingsStore.changeTheme}>
           <ListItemIcon>
             {settingsStore.theme === settingsStore.THEMES.DARK ? <Brightness5 /> : <Brightness4 />}
           </ListItemIcon>
           <ListItemText primary="Dark Theme" />
-        </ListItem>
+        </ListItemButton>
       </List>
 
       <div className={classes.spacer} />
 
       <List>
-        <ListItem button onClick={() => setApiKeyOpen(true)}>
+        <ListItemButton onClick={() => setApiKeyOpen(true)}>
           <ListItemIcon>
             <VpnKey />
           </ListItemIcon>
           <ListItemText>
             <Typography align="left">Change API key</Typography>
           </ListItemText>
-        </ListItem>
+        </ListItemButton>
       </List>
 
       <List>
-        <ListItem
-          button
+        <ListItemButton
           onClick={() => {
             settingsStore.closeSettings();
             dataStore.clearData();
           }}
         >
           <ListItemIcon>
-            <DeleteOutline />
+            <DeleteOutlined />
           </ListItemIcon>
           <ListItemText>
             <Typography align="left">Clear all scans&nbsp;</Typography>
           </ListItemText>
-        </ListItem>
+        </ListItemButton>
       </List>
     </>
   );
