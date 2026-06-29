@@ -1,6 +1,7 @@
-/* Module augmentation: the app themes define a custom `default` palette color
-   (used as `theme.palette.default.main`). Teach Material-UI's types about it. */
+/* MUI module augmentation: the custom `default` palette color plus the
+   redesign's `theme.tokens` design-token bag (see src/themes/tokens.ts). */
 import '@mui/material/styles';
+import type { DesignTokens } from './themes/tokens';
 
 declare module '@mui/material/styles' {
   interface Palette {
@@ -8,5 +9,11 @@ declare module '@mui/material/styles' {
   }
   interface PaletteOptions {
     default?: PaletteOptions['primary'];
+  }
+  interface Theme {
+    tokens: DesignTokens;
+  }
+  interface ThemeOptions {
+    tokens?: DesignTokens;
   }
 }
