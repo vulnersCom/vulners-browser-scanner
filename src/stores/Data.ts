@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import { sendMessage } from '../Browser';
 import { useSettingsStore } from './Settings';
-import type { HostData, ScanStat, Settings, VulnerabilitiesResponse } from '../types';
+import type {
+  HostData,
+  ScanStat,
+  Settings,
+  VulnerabilitiesResponse,
+  WorkerMessage,
+} from '../types';
 
 export interface DataState {
   url: string;
@@ -17,6 +23,25 @@ export interface DataState {
   setLandingSeen: () => void;
 }
 
+export function applyVulnerabilitiesResponse(data: VulnerabilitiesResponse): void {
+  // Never log settings — they contain the user-supplied API key (secret).
+  console.log('[VULNERS]', {
+    type: 'SCAN_DATA_RECEIVED',
+    hosts: data.data?.length ?? 0,
+    stat: data.stat,
+    url: data.url,
+  });
+  useDataStore.setState({
+    url: data.url,
+    data: data.data,
+    stat: data.stat,
+    settings: data.settings,
+    landingSeen: data.landingSeen,
+    loaded: true,
+  });
+  useSettingsStore.getState().updateSettings(data.settings);
+}
+
 export const useDataStore = create<DataState>((set) => ({
   url: '',
   data: [],
@@ -27,22 +52,7 @@ export const useDataStore = create<DataState>((set) => ({
 
   loadData: () => {
     sendMessage<VulnerabilitiesResponse>({ action: 'show_vulnerabilities' }, (data) => {
-      // Never log settings — they contain the user-supplied API key (secret).
-      console.log('[VULNERS]', {
-        type: 'LOAD_DATA_RECEIVED',
-        hosts: data.data?.length ?? 0,
-        stat: data.stat,
-        url: data.url,
-      });
-      set({
-        url: data.url,
-        data: data.data,
-        stat: data.stat,
-        settings: data.settings,
-        landingSeen: data.landingSeen,
-        loaded: true,
-      });
-      useSettingsStore.getState().updateSettings(data.settings);
+      applyVulnerabilitiesResponse(data);
     });
   },
 
@@ -58,3 +68,13 @@ export const useDataStore = create<DataState>((set) => ({
     sendMessage({ action: 'landing_seen' });
   },
 }));
+
+try {
+  chrome.runtime.onMessage.addListener((message: WorkerMessage) => {
+    if (message.action === 'scan_update') {
+      applyVulnerabilitiesResponse(message.response);
+    }
+  });
+} catch (e) {
+  console.error('[Data]', e);
+}

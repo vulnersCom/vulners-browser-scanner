@@ -94,6 +94,28 @@ function getCurrentTab(): Promise<chrome.tabs.Tab[]> {
   return chrome.tabs.query({ active: true, currentWindow: true });
 }
 
+async function buildVulnerabilitiesResponse(): Promise<VulnerabilitiesResponse> {
+  const tabs = await getCurrentTab();
+  return {
+    data: Object.values(data),
+    stat,
+    settings,
+    landingSeen,
+    url: extractDomain(tabs[0]?.url ?? '') ?? '',
+  };
+}
+
+function notifyScanUpdate(): void {
+  void buildVulnerabilitiesResponse()
+    .then((response) => {
+      chrome.runtime.sendMessage({ action: 'scan_update', response }, () => {
+        // No popup may be open; reading lastError prevents noisy unchecked errors.
+        void chrome.runtime.lastError;
+      });
+    })
+    .catch((e) => console.warn('[VULNERS] scan update notification failed', e));
+}
+
 /* ------------------------------------------------------------------ *
  * Badge
  * ------------------------------------------------------------------ */
@@ -232,6 +254,7 @@ function addVulnerabilities(host: string, rule: Rule, items: VulnersSearchItem[]
     [LS_KEY_DATA]: JSON.stringify(data),
     [LS_KEY_STAT]: JSON.stringify(stat),
   });
+  notifyScanUpdate();
 
   void getCurrentTab().then((tabs) => {
     const tab = tabs[0];
@@ -255,15 +278,7 @@ async function handleRuntimeMessage(
   switch (request.action) {
     case 'show_vulnerabilities':
       if (sender.id === chrome.runtime.id) {
-        const tabs = await getCurrentTab();
-        const response: VulnerabilitiesResponse = {
-          data: Object.values(data),
-          stat,
-          settings,
-          landingSeen,
-          url: extractDomain(tabs[0]?.url ?? '') ?? '',
-        };
-        sendResponse(response);
+        sendResponse(await buildVulnerabilitiesResponse());
       }
       return;
     case 'load_settings':

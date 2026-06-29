@@ -166,6 +166,11 @@ export interface VulnerabilitiesResponse {
   url: string;
 }
 
+/** Worker -> popup push messages. */
+export type WorkerMessage =
+  | { action: 'settings'; settings: Settings }
+  | { action: 'scan_update'; response: VulnerabilitiesResponse };
+
 /** External message from vulners.com to set the API key. */
 export interface ExternalSetKeyRequest {
   action: 'set_key';

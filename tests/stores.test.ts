@@ -1,6 +1,6 @@
 import { sendMessage } from '../src/Browser';
 import { useSettingsStore } from '../src/stores/Settings';
-import { useDataStore } from '../src/stores/Data';
+import { applyVulnerabilitiesResponse, useDataStore } from '../src/stores/Data';
 import type { VulnerabilitiesResponse } from '../src/types';
 
 jest.mock('../src/Browser', () => ({ sendMessage: jest.fn() }));
@@ -112,6 +112,50 @@ describe('useDataStore', () => {
     // settings were mirrored into the settings store
     expect(useSettingsStore.getState().showOnlyVulnerable).toBe(true);
     expect(useSettingsStore.getState().apiKey).toBe('k');
+  });
+
+  it('applies pushed scan updates while the popup is open', () => {
+    const response: VulnerabilitiesResponse = {
+      data: [
+        {
+          name: 'localhost:8000',
+          vulnerable: true,
+          software: {
+            angular: {
+              software: 'AngularJS, script',
+              version: '1.5.8',
+              vulnerabilities: [
+                {
+                  id: 'CVE-TEST',
+                  type: 'cve',
+                  title: 'test',
+                  score: 8.8,
+                  scoreColor: '#ff8000',
+                  description: 'test',
+                },
+              ],
+            },
+          },
+        },
+      ],
+      stat: { vulnerable: 1, scanned: 1 },
+      settings: {
+        showOnlyVulnerable: true,
+        showAllDomains: false,
+        doExtraScan: true,
+        apiKey: 'k',
+        introStep: 0,
+        error: '',
+      },
+      landingSeen: true,
+      url: 'localhost:8000',
+    };
+
+    applyVulnerabilitiesResponse(response);
+
+    expect(useDataStore.getState().loaded).toBe(true);
+    expect(useDataStore.getState().data[0]?.software.angular.version).toBe('1.5.8');
+    expect(useSettingsStore.getState().showOnlyVulnerable).toBe(true);
   });
 
   it('clearData resets state and notifies the worker', () => {
