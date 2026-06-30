@@ -56,7 +56,10 @@ const Search: FC = () => {
 
   let list: HostData[] = [...data];
 
-  if (!showAllDomains && url) {
+  // "Show all domains" off means "only the current tab". With no current
+  // domain (blank/new tab), that narrows to an empty list so the placeholder
+  // shows, rather than leaking every previously scanned host.
+  if (!showAllDomains) {
     list = domainSoft ? [domainSoft] : [];
   }
 
